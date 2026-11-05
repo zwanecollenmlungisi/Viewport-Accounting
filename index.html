@@ -3299,12 +3299,6 @@ $('#forgotLink').addEventListener('click', async e => {
   if (error) return alertAuth(error.message);
   alertAuth('Password reset email sent. Check your inbox for the link.', true);
 });
-  window.addEventListener('beforeunload', () => {
-  if (currentUser && state) {
-    // Fire a final save before the page closes
-    pushStateToSupabase();
-  }
-});
 </script>
 </body>
 </html>
