@@ -1321,7 +1321,7 @@ function getTerm(key) {
 /* =====================================================================
    3. AUTH & STATE
    ===================================================================== */
-const PLAN_PRICE  = 3850;
+const PLAN_PRICE  = 4850;
 const PLAN_MONTHS = 12;
 let currentUser = null;
 let state = null;
@@ -1667,10 +1667,10 @@ function saveState() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(pushStateToSupabase, 600);
 }
-
 async function pushStateToSupabase() {
   if (!currentUser || !state || !activeWorkspaceId) return;
   isSyncing = true;
+  
   const { error } = await supabase.from('financial_data').upsert({
     user_id: activeWorkspaceId,
     incomes: state.incomes, expenses: state.expenses, assets: state.assets,
@@ -1680,8 +1680,15 @@ async function pushStateToSupabase() {
     period: state.period, ui: state.ui,
     updated_at: new Date().toISOString()
   }, { onConflict: 'user_id' });
-  if (error) console.error('pushStateToSupabase', error);
+
+  // THIS IS WHERE THE ERROR CHECK BELONGS
+  if (error) {
+    console.error('pushStateToSupabase', error);
+    alert('⚠️ Failed to save to database: ' + error.message + '\n\nDid you run the latest SQL script to add the new columns (quotes, bills, employees, etc)?');
+  }
+  
   setTimeout(() => { isSyncing = false; }, 800);
+}
 }
 
 async function flushSave() { clearTimeout(saveTimer); await pushStateToSupabase(); }
@@ -3026,7 +3033,11 @@ function syncPeriodInputs() {
   $('#periodFrom').value = P().from; $('#periodTo').value = P().to; $('#periodPreset').value = P().preset;
   const locked = P().preset !== 'custom'; $('#periodFrom').disabled = locked; $('#periodTo').disabled = locked;
 }
-function refresh() { saveState(); syncPeriodInputs(); render(); }
+async function refresh() { 
+  await flushSave(); 
+  syncPeriodInputs(); 
+  render(); 
+}
 
 async function bootApp() {
   await checkPendingInvites();
