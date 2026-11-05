@@ -1256,6 +1256,13 @@ function daysUntil(isoDate) {
   const today = parseISO(todayISO());
   return Math.round((end - today) / 86400000);
 }
+  function subStatus(sub) {
+  if (!sub || !sub.end) return { state: 'none', days: 0 };
+  const d = daysUntil(sub.end);
+  if (d < 0) return { state: 'expired', days: d };
+  if (d <= 30) return { state: 'expiring', days: d };
+  return { state: 'active', days: d };
+}
 function saSbcTax(profit) {
   const p = Math.max(0, num(profit));
   if (p <= 95750) return 0;
