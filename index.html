@@ -1667,6 +1667,12 @@ function saveState() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(pushStateToSupabase, 600);
 }
+function saveState() {
+  if (!currentUser || !state || !activeWorkspaceId) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(pushStateToSupabase, 600);
+}
+
 async function pushStateToSupabase() {
   if (!currentUser || !state || !activeWorkspaceId) return;
   isSyncing = true;
@@ -1681,16 +1687,30 @@ async function pushStateToSupabase() {
     updated_at: new Date().toISOString()
   }, { onConflict: 'user_id' });
 
-  // THIS IS WHERE THE ERROR CHECK BELONGS
   if (error) {
     console.error('pushStateToSupabase', error);
-    alert('⚠️ Failed to save to database: ' + error.message + '\n\nDid you run the latest SQL script to add the new columns (quotes, bills, employees, etc)?');
+    alert('⚠️ Failed to save to database: ' + error.message + '\n\nDid you run the latest SQL script to add the new columns?');
   }
   
   setTimeout(() => { isSyncing = false; }, 800);
 }
+
+async function flushSave() { 
+  clearTimeout(saveTimer); 
+  await pushStateToSupabase(); 
 }
 
+function saveProfile() {
+  if (!currentUser || !state) return;
+  clearTimeout(profileSaveTimer);
+  profileSaveTimer = setTimeout(pushProfileToSupabase, 600);
+}
+
+async function refresh() { 
+  await flushSave(); 
+  syncPeriodInputs(); 
+  render(); 
+}
 async function flushSave() { clearTimeout(saveTimer); await pushStateToSupabase(); }
 
 function saveProfile() {
@@ -3298,6 +3318,11 @@ $('#forgotLink').addEventListener('click', async e => {
   const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
   if (error) return alertAuth(error.message);
   alertAuth('Password reset email sent. Check your inbox for the link.', true);
+});
+  window.addEventListener('beforeunload', () => {
+  if (currentUser && state) {
+    pushStateToSupabase();
+  }
 });
 </script>
 </body>
