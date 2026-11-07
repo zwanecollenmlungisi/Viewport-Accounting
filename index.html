@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+s<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -3114,7 +3114,7 @@ function printPayslips() {
         <div style="font-size: 11px; color: #777;">Generated on ${new Date().toLocaleString('en-ZA')}</div>
       </div>
       
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+      <div style="display:.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
         ${empCalcs.map(e => `
           <div style="border: 1px solid #000; border-radius: 8px; padding: 20px; break-inside: avoid;">
             <div style="border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; text-align: center;">
