@@ -2660,7 +2660,51 @@ function renderBalanceSheet() {
       ${!isBalanced ? `<p class="bs-check-note">Difference indicates items not captured. Check opening capital, retained earnings, loans, receivables, or prior VAT/tax. Update in Settings to reconcile.</p>` : ''}
     </div>`;
 }
+function renderTrialBalance() {
+  const c = compute();
+  const bs = computeBalanceSheet();
+  
+  // Compile the Trial Balance from existing data
+  const tb = [
+    { code: '1000', name: 'Cash and Cash Equivalents', dr: bs.cash, cr: 0 },
+    { code: '1200', name: 'Trade Receivables (Debtors)', dr: bs.receivables, cr: 0 },
+    { code: '1300', name: 'Inventory', dr: bs.inventory, cr: 0 },
+    { code: '1500', name: 'Property, Plant & Equipment (Cost)', dr: state.assets.reduce((a,b)=>a+num(b.cost),0), cr: 0 },
+    { code: '1510', name: 'Accumulated Depreciation', dr: 0, cr: state.assets.reduce((a,b)=>a+assetValuation(b).accum,0) },
+    { code: '2000', name: 'Trade Payables (Creditors)', dr: 0, cr: bs.tradePayables },
+    { code: '2100', name: 'VAT Payable', dr: 0, cr: Math.max(0, bs.vatPayable) },
+    { code: '2200', name: 'Income Tax Payable', dr: 0, cr: Math.max(0, bs.taxPayable) },
+    { code: '3000', name: getTerm('capital'), dr: 0, cr: bs.partnerCapital },
+    { code: '3100', name: getTerm('retained'), dr: 0, cr: bs.retainedEarnings },
+    { code: '4000', name: 'Revenue / Income', dr: 0, cr: c.revenue },
+    { code: '5000', name: 'Cost of Sales', dr: c.cogs, cr: 0 },
+    { code: '6000', name: 'Operating Expenses', dr: c.opex, cr: 0 },
+    { code: '7000', name: 'Depreciation Expense', dr: c.dep, cr: 0 },
+    { code: '8000', name: 'Taxation Expense', dr: c.tax, cr: 0 }
+  ];
 
+  const totalDr = tb.reduce((a, b) => a + b.dr, 0);
+  const totalCr = tb.reduce((a, b) => a + b.cr, 0);
+
+  return `
+    <div class="section">
+      <h2>Trial Balance</h2>
+      <table>
+        <thead><tr><th>Code</th><th>Account Name</th><th class="r">Debit (R)</th><th class="r">Credit (R)</th></tr></thead>
+        <tbody>
+          ${tb.map(row => `<tr><td>${row.code}</td><td>${row.name}</td><td class="r">${row.dr ? money(row.dr) : '—'}</td><td class="r">${row.cr ? money(row.cr) : '—'}</td></tr>`).join('')}
+        </tbody>
+        <tfoot>
+          <tr class="tot">
+            <td colspan="2" style="text-align:right">Totals</td>
+            <td class="r" style="color:${Math.abs(totalDr - totalCr) < 1 ? '#065f46' : '#991b1b'}">${money(totalDr)}</td>
+            <td class="r" style="color:${Math.abs(totalDr - totalCr) < 1 ? '#065f46' : '#991b1b'}">${money(totalCr)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  `;
+}
 function renderTax() {
   const c = compute(), co = state.company;
   const isNonProfit = ['npo', 'school', 'trust'].includes(co.orgType);
