@@ -3096,10 +3096,63 @@ function printVat201() {
   // Clear it out after printing so it doesn't interfere with the main report
   setTimeout(() => { document.getElementById('print-root').innerHTML = ''; }, 1000);
 }
-function printIRP6() {
-  const c = compute(), co = state.company;
-  $('#print-root').innerHTML = `<div class="print-doc"><div class="ph"><div><h1>IRP6 Provisional Tax Summary</h1><div><strong>Taxpayer:</strong> ${esc(co.name)}</div><div><strong>Income Tax Ref:</strong> ${esc(co.taxId)}</div></div><div class="meta"><div><strong>Year of Assessment:</strong> ${P().from.slice(0,4)}</div></div></div><div class="basis">Estimate based on YTD performance.</div><table><tbody><tr><td>Taxable Profit (YTD)</td><td class="r">${money(c.ebit)}</td></tr><tr><td>Estimated Normal Tax (Full Year)</td><td class="r">${money(c.tax)}</td></tr><tr><td>Provisional Tax Due (Approx 50%)</td><td class="r"><strong>${money(c.tax / 2)}</strong></td></tr></tbody></table></div>`;
+function printPayslips() {
+  if (!state || !state.employees || !state.employees.length) {
+    return alert('No employees to print payslips for.');
+  }
+
+  const empCalcs = state.employees.map(e => {
+    const c = calcPayroll(e);
+    return { ...e, ...c };
+  });
+
+  let html = `
+    <div class="print-doc" style="font-family: system-ui, sans-serif;">
+      <div style="text-align: center; margin-bottom: 20px; border-bottom: 3px solid #0f172a; padding-bottom: 12px;">
+        <h1 style="font-size: 24px; margin: 0 0 5px;">${esc(state.company.name || 'Company')}</h1>
+        <div style="font-size: 14px; color: #555;">Employee Payslips — ${new Date().toLocaleString('en-ZA', { month: 'long', year: 'numeric' })}</div>
+        <div style="font-size: 11px; color: #777;">Generated on ${new Date().toLocaleString('en-ZA')}</div>
+      </div>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        ${empCalcs.map(e => `
+          <div style="border: 1px solid #000; border-radius: 8px; padding: 20px; break-inside: avoid;">
+            <div style="border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; text-align: center;">
+              <h3 style="margin: 0 0 5px; font-size: 16px;">${esc(state.company.name || 'Company')}</h3>
+              <div style="font-size: 12px; color: #555;">Payslip: ${new Date().toLocaleString('en-ZA', { month: 'long', year: 'numeric' })}</div>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; color: #333;">
+              <span><b>Emp No:</b> ${esc(e.empNo || '—')}</span>
+              <span><b>Contact:</b> ${esc(e.phone || e.email || '—')}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 15px;">
+              <span><b>Employee:</b> ${esc(e.name)}</span>
+              <span><b>ID:</b> ${esc(e.idNumber)}</span>
+            </div>
+            
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <tbody>
+                <tr><td style="padding: 6px 0; border-bottom: 1px dashed #ddd;">Gross Salary</td><td style="text-align: right; padding: 6px 0; border-bottom: 1px dashed #ddd;">${money(e.gross)}</td></tr>
+                <tr><td style="padding: 6px 0; border-bottom: 1px dashed #ddd;">PAYE</td><td style="text-align: right; padding: 6px 0; border-bottom: 1px dashed #ddd; color: #b91c1c;">-${money(e.paye)}</td></tr>
+                <tr><td style="padding: 6px 0; border-bottom: 1px dashed #ddd;">UIF (1%)</td><td style="text-align: right; padding: 6px 0; border-bottom: 1px dashed #ddd; color: #b91c1c;">-${money(e.uif)}</td></tr>
+                <tr><td style="padding: 10px 0; font-weight: bold; border-top: 2px solid #000;">Net Pay</td><td style="text-align: right; padding: 10px 0; font-weight: bold; border-top: 2px solid #000;">${money(e.net)}</td></tr>
+              </tbody>
+            </table>
+            
+            <div style="font-size: 11px; color: #777; margin-top: 15px; text-align: center;">Co. UIF: ${money(e.uif)} | SDL: ${money(e.sdl)}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  // Inject into the hidden print-root container
+  document.getElementById('print-root').innerHTML = html;
   window.print();
+  
+  // Clear it out after printing so it doesn't interfere with the main report
+  setTimeout(() => { document.getElementById('print-root').innerHTML = ''; }, 1000);
 }
 
 function buildPrintDoc() {
