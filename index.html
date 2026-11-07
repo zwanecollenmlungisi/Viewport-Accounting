@@ -1786,6 +1786,11 @@ const COLORS = ['#007a4d','#0891b2','#2563eb','#d97706','#dc2626','#7c3aed','#db
 function emptyState() {
   return {
     company: {
+        lockDate: '', // <-- ADD
+    },
+    // Add drawings array
+    incomes: [], expenses: [], assets: [], partners: [], suppliers: [],
+    invoices: [], products: [], employees: [], quotes: [], bills: [], audit_log: [], drawings: [],
       name: '', regNo: '', address: '', taxId: '', vatNo: '', phone: '', email: '',
       currency: 'R', incomeTaxRate: 27, vatRate: 15,
       vatEnabled: false, vatInclusive: false, sbcEnabled: true, orgType: 'company',
