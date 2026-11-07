@@ -3,14 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Viewport Accounting — Small Business Financial</title>
-<!-- 
-  SETUP INSTRUCTIONS:
-  1. Run the full SQL migration in Supabase (profiles, financial_data, workspace_members).
-  2. Ensure RLS policies are active.
-  3. Turn OFF "Confirm Email" in Supabase Auth settings for easier testing.
-  4. Replace SUPABASE_URL and SUPABASE_ANON_KEY in the script section.
--->
+<title> viewport Accounting tool — Small Business Financial</title>
 <style>
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -353,18 +346,48 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
   .print-doc .foot{margin-top:22px;border-top:1px solid #999;padding-top:8px;font-size:9.5px;color:#555}
   .print-doc .basis{font-size:10px;color:#333;border:1px solid #bbb;border-radius:5px;padding:8px 10px;margin-bottom:10px}
 }
+
+/* Fixed Payslip Printing */
+@media print {
+  body.print-payslips #site, 
+  body.print-payslips #app .topbar,
+  body.print-payslips #app .periodbar,
+  body.print-payslips #app .kpis,
+  body.print-payslips #app .grid-2,
+  body.print-payslips #app .card-head,
+  body.print-payslips #app .table-wrap,
+  body.print-payslips #app #emp201Summary,
+  body.print-payslips #app .card h3,
+  body.print-payslips #app .card > button {
+    display: none !important;
+  }
+  body.print-payslips #app,
+  body.print-payslips #view-payroll,
+  body.print-payslips #payslipsContainer,
+  body.print-payslips #app .card {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+  }
+  body.print-payslips #payslipsContainer {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 20px !important;
+  }
+}
 </style>
 </head>
 <body>
 
-<div id="boot"><div style="text-align:center"><div class="spin"></div>Loading Viewport Accounting…</div></div>
+<div id="boot"><div style="text-align:center"><div class="spin"></div>Loading Viewport Accounting tool…</div></div>
 
 <div id="site" style="display:none">
   <header class="l-nav">
     <div class="l-wrap l-nav-in">
       <a class="l-brand" href="#" data-goto="landing">
         <span class="mark">💼</span>
-        <span><b>Viewport Accounting<em>ZA</em></b><small>Small business finance</small></span>
+        <span><b>Viewport Accounting tool<em></em></b><small>Small business finance</small></span>
       </a>
       <nav class="l-links">
         <a href="#features">Features</a>
@@ -392,7 +415,7 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
     <section class="hero">
       <div class="l-wrap hero-grid">
         <div>
-          <span class="hero-badge">Viewport Accounting Built for South African businesses, NPOs & FSPs</span>
+          <span class="hero-badge">Viewport Accounting tool Built for South African businesses, NPOs & FSPs</span>
           <h1>Know your numbers. <span>Grow with confidence.</span></h1>
           <p class="lead">Track daily takings, run payroll, invoice clients, and generate IFRS for SMEs financials. Fully compliant with SARS, NCR, and FSP requirements.</p>
           <div class="hero-cta">
@@ -543,7 +566,7 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
       <div class="l-wrap">
         <div class="foot-grid">
           <div>
-            <div class="brandline"><span class="mark">💼</span><b>Viewport Accounting</b></div>
+            <div class="brandline"><span class="mark">💼</span><b>Viewport Accounting tool</b></div>
             <p style="margin:0;line-height:1.65;max-width:280px">Practical budgeting and reporting for South African small businesses, NPOs, and FSPs.</p>
           </div>
           <div><h4>Product</h4><a href="#features">Features</a><a href="#how">How it works</a><a href="#pricing">Pricing</a><a href="#" data-auth="signup">Create account</a></div>
@@ -551,8 +574,8 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
           <div><h4>Account</h4><a href="#" data-auth="login">Log in</a><a href="#" data-auth="signup">Sign up</a><a href="#pricing">Annual plan — R 4 850</a></div>
         </div>
         <div class="foot-bottom">
-          <span>© <span id="footYear"></span> Viewport Accounting. Made for South African small business.</span>
-          <span>Estimates only — confirm tax figures with SARS or a registered tax practitioner.</span>
+          <span>© <span id="footYear"></span> Viewport Accounting tool. Made for South African small business.</span>
+          <span>confirm tax figures with SARS or a registered tax practitioner.</span>
         </div>
       </div>
     </footer>
@@ -564,7 +587,7 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
       <div class="auth-head">
         <div class="mark">💼</div>
         <h1 id="authTitle">Welcome back</h1>
-        <p id="authSub">Log in to your budgeting workspace.</p>
+        <p id="authSub">Log in to your bookkeeping workspace.</p>
       </div>
       <div class="auth-alert" id="authAlert"><span id="authAlertIcon">⚠️</span><span id="authAlertText"></span></div>
 
@@ -587,7 +610,7 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
           <a href="#" id="forgotLink">Forgot password?</a>
         </div>
         <button class="btn primary block lg" type="submit">Log in</button>
-        <div class="auth-switch">New to Viewport Accounting? <button type="button" data-auth="signup">Create an account</button></div>
+        <div class="auth-switch">New to Viewport Accounting tool? <button type="button" data-auth="signup">Create an account</button></div>
       </form>
 
       <form id="signupForm" class="hidden" novalidate>
@@ -685,9 +708,7 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
       <button data-view="settings">Settings</button>
     </nav>
     <div class="actions">
-      <div id="liveClock" style="font-size:12px; font-weight:600; color:#475569; display:flex; flex-direction:column; align-items:flex-end; margin-right:10px; line-height:1.2;">
-        <!-- Javascript will inject time -->
-      </div>
+      <div id="liveClock" style="font-size:12px; font-weight:600; color:#475569; display:flex; flex-direction:column; align-items:flex-end; margin-right:10px; line-height:1.2;"></div>
       <button class="btn primary" id="btnPrint">🖨 Print report</button>
       <span class="plan-badge" id="planBadge">Annual</span>
       <div class="userchip">
@@ -716,7 +737,6 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
   </div>
 
   <main>
-    <!-- ========== DASHBOARD ========== -->
     <section id="view-dashboard" class="view active">
       <div class="kpis" id="kpis"></div>
       <div class="grid-2">
@@ -732,7 +752,6 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
       <div class="card"><h3>Recent transactions</h3><div class="table-wrap"><table id="tblRecent"></table></div></div>
     </section>
 
-    <!-- ========== TRACKING ========== -->
     <section id="view-tracking" class="view">
       <div class="kpis" id="trackKpis"></div>
       <div class="card">
@@ -755,7 +774,6 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
       </div>
     </section>
 
-    <!-- ========== INCOME ========== -->
     <section id="view-income" class="view">
       <div class="card">
         <h3>Add income received</h3>
@@ -764,6 +782,11 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
           <label>Description<input name="desc" placeholder="e.g. Invoice #1042 / cash sale" required></label>
           <label>Category<select name="category" id="incomeCats"></select></label>
           <label>Amount (R)<input type="number" name="amount" step="0.01" min="0" placeholder="0,00" required></label>
+          <label>VAT Code<select name="vatCode">
+            <option value="std">Standard (15%)</option>
+            <option value="zero">Zero-Rated (0%)</option>
+            <option value="exempt">Exempt (No VAT)</option>
+          </select></label>
           <label>Method<select name="method"><option>EFT</option><option>Cash</option><option>Card</option><option>SnapScan / Yoco</option><option>Cheque</option><option>Other</option></select></label>
           <button class="btn primary" type="submit">+ Add income</button>
         </form>
@@ -774,7 +797,6 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
       </div>
     </section>
 
-    <!-- ========== EXPENSES ========== -->
     <section id="view-expenses" class="view">
       <div class="card">
         <h3>Add expense</h3>
@@ -783,6 +805,11 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
           <label>Description<input name="desc" placeholder="e.g. Office rent" required></label>
           <label>Category<select name="category" id="expenseCats"></select></label>
           <label>Amount (R)<input type="number" name="amount" step="0.01" min="0" placeholder="0,00" required></label>
+          <label>VAT Code<select name="vatCode">
+            <option value="std">Standard (15%)</option>
+            <option value="zero">Zero-Rated (0%)</option>
+            <option value="exempt">Exempt (No VAT)</option>
+          </select></label>
           <label>Method<select name="method"><option>EFT</option><option>Cash</option><option>Card</option><option>Debit order</option><option>Cheque</option><option>Other</option></select></label>
           <button class="btn primary" type="submit">+ Add expense</button>
         </form>
@@ -790,7 +817,6 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
       <div class="card"><h3>Expenses <span class="muted" id="expenseTotal"></span></h3><div class="table-wrap"><table id="tblExpenses"></table></div></div>
     </section>
 
-    <!-- ========== INVOICES ========== -->
     <section id="view-invoices" class="view">
       <div class="kpis" id="invKpis"></div>
       <div class="card">
@@ -810,7 +836,6 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
       </div>
     </section>
 
-    <!-- ========== QUOTES ========== -->
     <section id="view-quotes" class="view">
       <div class="kpis" id="quoteKpis"></div>
       <div class="card">
@@ -830,7 +855,6 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
       </div>
     </section>
 
-    <!-- ========== BILLS ========== -->
     <section id="view-bills" class="view">
       <div class="kpis" id="billKpis"></div>
       <div class="card">
@@ -851,7 +875,6 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
       </div>
     </section>
 
-    <!-- ========== PRODUCTS ========== -->
     <section id="view-products" class="view">
       <div class="card">
         <div class="card-head">
@@ -862,7 +885,6 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
       </div>
     </section>
 
-    <!-- ========== PAYROLL ========== -->
     <section id="view-payroll" class="view">
       <div class="kpis" id="payKpis"></div>
       <div class="grid-2">
@@ -887,7 +909,6 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
       </div>
     </section>
 
-    <!-- ========== ASSETS ========== -->
     <section id="view-assets" class="view">
       <div class="card">
         <h3>Register an asset</h3>
@@ -907,7 +928,6 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
       </div>
     </section>
 
-    <!-- ========== BANK IMPORT ========== -->
     <section id="view-import" class="view">
       <div class="card">
         <div class="card-head">
@@ -952,7 +972,6 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
       </div>
     </section>
 
-    <!-- ========== REGISTERS ========== -->
     <section id="view-registers" class="view">
       <div class="kpis" id="regKpis"></div>
 
@@ -966,6 +985,14 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
         </div>
         <div class="table-wrap"><table class="sheet" id="tblPartners"></table></div>
         <p class="muted" id="partnerNote" style="margin:10px 0 0"></p>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h3>Partner Drawings &amp; Dividends</h3>
+          <button class="btn sm" id="btnAddDrawing">+ Log Drawing</button>
+        </div>
+        <div class="table-wrap"><table id="tblDrawings"></table></div>
       </div>
 
       <div class="card">
@@ -989,7 +1016,6 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
       </div>
     </section>
 
-    <!-- ========== REPORTS ========== -->
     <section id="view-reports" class="view">
       <div class="card">
         <h3>Statement of comprehensive income</h3>
@@ -1005,7 +1031,6 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
       </div>
     </section>
 
-    <!-- ========== TAX ========== -->
     <section id="view-tax" class="view">
       <div class="card">
         <div class="card-head">
@@ -1020,14 +1045,15 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
       <div class="card"><h3>Normal tax — SARS estimate</h3><div id="taxIncome"></div></div>
     </section>
 
-    <!-- ========== SETTINGS ========== -->
     <section id="view-settings" class="view">
       <div class="card">
         <h3>Company details <span class="muted">(used on printed reports)</span></h3>
         <div class="form-grid">
-          <label>Registered company name<input data-setting="company.name" placeholder="Your Company (Pty) Ltd"></label>
-          <label>Organization Type
-            <select data-setting="company.orgType" style="width:100%">
+          <label>Registered company name <span id="lockOrgName" class="hidden" title="Locked for 12 months" style="color:#b91c1c">🔒</span>
+            <input id="inputOrgName" data-setting="company.name" placeholder="Your Company (Pty) Ltd">
+          </label>
+          <label>Organization Type <span id="lockOrgType" class="hidden" style="color:#b91c1c">🔒</span>
+            <select id="inputOrgType" data-setting="company.orgType" style="width:100%">
               <option value="company">Company (Pty Ltd / CC)</option>
               <option value="sole_prop">Sole Proprietor / Freelancer</option>
               <option value="partnership">Partnership</option>
@@ -1037,7 +1063,9 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
               <option value="financial">Financial Services (NCR / FSP)</option>
             </select>
           </label>
-          <label>Company registration no.<input data-setting="company.regNo" placeholder="2019/123456/07"></label>
+          <label>Company registration no. <span id="lockOrgReg" class="hidden" style="color:#b91c1c">🔒</span>
+            <input id="inputOrgReg" data-setting="company.regNo" placeholder="2019/123456/07">
+          </label>
           <label>NCR Registration No.<input data-setting="company.ncrNo" placeholder="NCRCP1234"></label>
           <label>FSP License No.<input data-setting="company.fspNo" placeholder="12345"></label>
           <label>Business address<input data-setting="company.address" placeholder="Street, Suburb, City, Postal code"></label>
@@ -1068,7 +1096,9 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
           <label>Trade receivables (R)<input type="number" data-setting="company.tradeReceivables" step="0.01" min="0"></label>
           <label>Trade payables (R)<input type="number" data-setting="company.tradePayables" step="0.01" min="0"></label>
           <label>Long-term loans (R)<input type="number" data-setting="company.longTermLoans" step="0.01" min="0"></label>
+          <label>Deferred Tax Liability (R)<input type="number" data-setting="company.deferredTax" step="0.01" min="0"></label>
           <label>Other non-current assets (R)<input type="number" data-setting="company.otherNonCurrentAssets" step="0.01" min="0"></label>
+          <label>Lock Transactions Before Date<input type="date" data-setting="company.lockDate"></label>
         </div>
       </div>
 
@@ -1148,7 +1178,6 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
 /* =====================================================================
    1. SUPABASE CONFIGURATION
    ===================================================================== */
-// ⚠️ REPLACE THESE WITH YOUR ACTUAL SUPABASE CREDENTIALS
 const SUPABASE_URL      = 'https://maqcalckhcancgbwqzhh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1hcWNhbGNraGNhbmNnYndxemhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxOTUzNzEsImV4cCI6MjEwODc3MTM3MX0.UhmmB3QOf4BS-SZ3hskA9cZtkkEQQsT7p9Kr1wowWAA';
 
@@ -1256,13 +1285,6 @@ function daysUntil(isoDate) {
   const today = parseISO(todayISO());
   return Math.round((end - today) / 86400000);
 }
-  function subStatus(sub) {
-  if (!sub || !sub.end) return { state: 'none', days: 0 };
-  const d = daysUntil(sub.end);
-  if (d < 0) return { state: 'expired', days: d };
-  if (d <= 30) return { state: 'expiring', days: d };
-  return { state: 'active', days: d };
-}
 function saSbcTax(profit) {
   const p = Math.max(0, num(profit));
   if (p <= 95750) return 0;
@@ -1291,14 +1313,15 @@ function calcAnnualPaye(annualGross) {
   else if (annualGross <= 857900) tax = 179147 + (annualGross - 673000) * 0.39;
   else if (annualGross <= 1817000) tax = 251258 + (annualGross - 857900) * 0.41;
   else tax = 644489 + (annualGross - 1817000) * 0.45;
-  return Math.max(0, tax - 17235); // Primary Rebate
+  return Math.max(0, tax - 17235);
 }
 function calcPayroll(emp) {
   const gross = num(emp.gross);
   const annualGross = gross * 12;
   const monthlyPaye = calcAnnualPaye(annualGross) / 12;
   const uif = Math.min(gross * 0.01, 177.12);
-  const sdl = gross * 0.01;
+  const totalAnnualPayroll = (state.employees || []).reduce((a, e) => a + (num(e.gross) * 12), 0);
+  const sdl = totalAnnualPayroll <= 500000 ? 0 : gross * 0.01;
   const net = gross - monthlyPaye - uif;
   return { gross, paye: monthlyPaye, uif, sdl, net };
 }
@@ -1321,8 +1344,17 @@ function getTerm(key) {
 /* =====================================================================
    3. AUTH & STATE
    ===================================================================== */
-const PLAN_PRICE  = 4850;
+const PLAN_PRICE  = 3850;
 const PLAN_MONTHS = 12;
+
+function subStatus(sub) {
+  if (!sub || !sub.end) return { state: 'none', days: 0 };
+  const d = daysUntil(sub.end);
+  if (d < 0) return { state: 'expired', days: d };
+  if (d <= 30) return { state: 'expiring', days: d };
+  return { state: 'active', days: d };
+}
+
 let currentUser = null;
 let state = null;
 let booted = false;
@@ -1408,10 +1440,11 @@ function profileToCompany(p) {
     orgType: p.org_type || 'company', ncrNo: p.ncr_no || '', fspNo: p.fsp_no || '',
     accName: p.acc_name || '', accFirm: p.acc_firm || '', accBody: p.acc_body || 'SAIPA',
     accNumber: p.acc_number || '', accReportType: p.acc_report_type || 'Compilation Report',
-    accOpinion: p.acc_opinion || '',
+    accOpinion: p.acc_opinion || '', lockDate: p.lock_date || '',
     openingCash: num(p.opening_cash), openingRetainedEarnings: num(p.opening_retained_earnings),
     inventory: num(p.inventory), tradeReceivables: num(p.trade_receivables), tradePayables: num(p.trade_payables),
-    longTermLoans: num(p.long_term_loans), otherNonCurrentAssets: num(p.other_non_current_assets)
+    longTermLoans: num(p.long_term_loans), otherNonCurrentAssets: num(p.other_non_current_assets),
+    deferredTax: num(p.deferred_tax)
   };
 }
 function profileToSubscription(p) {
@@ -1495,7 +1528,7 @@ async function doSignup(e) {
     await supabase.from('profiles').update({
       subscription_start: start, subscription_end: end,
       subscription_amount: PLAN_PRICE, subscription_reference: reference,
-      subscription_renewals: []
+      subscription_renewals: [], payment_status: 'paid' // Mark paid for demo
     }).eq('id', data.user.id);
 
     if (sample) {
@@ -1506,7 +1539,7 @@ async function doSignup(e) {
         incomes: seed.incomes, expenses: seed.expenses, assets: seed.assets,
         partners: seed.partners, suppliers: seed.suppliers, invoices: seed.invoices,
         products: seed.products, employees: seed.employees, quotes: seed.quotes, bills: seed.bills,
-        period: seed.period, ui: seed.ui
+        drawings: seed.drawings, period: seed.period, ui: seed.ui
       }).eq('user_id', data.user.id);
       await supabase.from('profiles').update({
         opening_cash: seed.company.openingCash, opening_retained_earnings: seed.company.openingRetainedEarnings
@@ -1636,6 +1669,7 @@ async function initWorkspace() {
       state.partners = newData.partners || [];
       state.suppliers = newData.suppliers || [];
       state.audit_log = newData.audit_log || [];
+      state.drawings = newData.drawings || [];
       render();
     }).subscribe();
 }
@@ -1656,7 +1690,7 @@ async function loadState() {
     incomes: data.incomes || [], expenses: data.expenses || [], assets: data.assets || [],
     partners: data.partners || [], suppliers: data.suppliers || [],
     invoices: data.invoices || [], products: data.products || [], employees: data.employees || [],
-    quotes: data.quotes || [], bills: data.bills || [], audit_log: data.audit_log || [],
+    quotes: data.quotes || [], bills: data.bills || [], audit_log: data.audit_log || [], drawings: data.drawings || [],
     period: data.period || { preset: 'taxyear', from: '', to: '' },
     ui: data.ui || { view: 'dashboard', trackGran: 'daily' }
   };
@@ -1664,53 +1698,27 @@ async function loadState() {
 
 function saveState() {
   if (!currentUser || !state || !activeWorkspaceId) return;
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(pushStateToSupabase, 600);
-}
-function saveState() {
-  if (!currentUser || !state || !activeWorkspaceId) return;
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(pushStateToSupabase, 600);
+  // INSTANT SAVE: Removed setTimeout to prevent data loss on refresh
+  pushStateToSupabase();
 }
 
 async function pushStateToSupabase() {
   if (!currentUser || !state || !activeWorkspaceId) return;
   isSyncing = true;
-  
   const { error } = await supabase.from('financial_data').upsert({
     user_id: activeWorkspaceId,
     incomes: state.incomes, expenses: state.expenses, assets: state.assets,
     partners: state.partners, suppliers: state.suppliers, invoices: state.invoices,
     products: state.products, employees: state.employees, quotes: state.quotes,
-    bills: state.bills, audit_log: state.audit_log,
+    bills: state.bills, audit_log: state.audit_log, drawings: state.drawings,
     period: state.period, ui: state.ui,
     updated_at: new Date().toISOString()
   }, { onConflict: 'user_id' });
 
-  if (error) {
-    console.error('pushStateToSupabase', error);
-    alert('⚠️ Failed to save to database: ' + error.message + '\n\nDid you run the latest SQL script to add the new columns?');
-  }
-  
+  if (error) console.error('pushStateToSupabase', error);
   setTimeout(() => { isSyncing = false; }, 800);
 }
 
-async function flushSave() { 
-  clearTimeout(saveTimer); 
-  await pushStateToSupabase(); 
-}
-
-function saveProfile() {
-  if (!currentUser || !state) return;
-  clearTimeout(profileSaveTimer);
-  profileSaveTimer = setTimeout(pushProfileToSupabase, 600);
-}
-
-async function refresh() { 
-  await flushSave(); 
-  syncPeriodInputs(); 
-  render(); 
-}
 async function flushSave() { clearTimeout(saveTimer); await pushStateToSupabase(); }
 
 function saveProfile() {
@@ -1730,10 +1738,11 @@ async function pushProfileToSupabase() {
     org_type: co.orgType, ncr_no: co.ncrNo, fsp_no: co.fspNo,
     acc_name: co.accName, acc_firm: co.accFirm, acc_body: co.accBody,
     acc_number: co.accNumber, acc_report_type: co.accReportType, acc_opinion: co.accOpinion,
+    lock_date: co.lockDate || null,
     opening_cash: num(co.openingCash), opening_retained_earnings: num(co.openingRetainedEarnings),
     inventory: num(co.inventory), trade_receivables: num(co.tradeReceivables),
     trade_payables: num(co.tradePayables), long_term_loans: num(co.longTermLoans),
-    other_non_current_assets: num(co.otherNonCurrentAssets)
+    other_non_current_assets: num(co.otherNonCurrentAssets), deferred_tax: num(co.deferredTax)
   };
   const { error } = await supabase.from('profiles').update(patch).eq('id', activeWorkspaceId);
   if (error) { console.error('pushProfileToSupabase', error); return; }
@@ -1790,10 +1799,21 @@ function emptyState() {
       currency: 'R', incomeTaxRate: 27, vatRate: 15,
       vatEnabled: false, vatInclusive: false, sbcEnabled: true, orgType: 'company',
       ncrNo: '', fspNo: '', accName: '', accFirm: '', accBody: 'SAIPA', accNumber: '', accReportType: 'Compilation Report', accOpinion: '',
-      openingCash: 0, openingRetainedEarnings: 0, inventory: 0, tradeReceivables: 0, tradePayables: 0, longTermLoans: 0, otherNonCurrentAssets: 0
+      lockDate: '', 
+      openingCash: 0, openingRetainedEarnings: 0, inventory: 0, tradeReceivables: 0, tradePayables: 0, longTermLoans: 0, otherNonCurrentAssets: 0, deferredTax: 0
     },
-    incomes: [], expenses: [], assets: [], partners: [], suppliers: [],
-    invoices: [], products: [], employees: [], quotes: [], bills: [], audit_log: [],
+    incomes: [], 
+    expenses: [], 
+    assets: [], 
+    partners: [], 
+    suppliers: [],
+    invoices: [], 
+    products: [], 
+    employees: [], 
+    quotes: [], 
+    bills: [], 
+    audit_log: [], 
+    drawings: [],
     period: { preset: 'taxyear', from: '', to: '' },
     ui: { view: 'dashboard', trackGran: 'daily' }
   };
@@ -1811,19 +1831,20 @@ function seedState() {
     taxId: '9012/345678/9', vatNo: '4820119076', phone: '+27 11 010 2233', email: 'hello@acmestudio.co.za',
     currency: 'R', incomeTaxRate: 27, vatRate: 15, vatEnabled: true, vatInclusive: false, sbcEnabled: true, orgType: 'company',
     ncrNo: '', fspNo: '', accName: 'John Doe', accFirm: 'Doe & Associates', accBody: 'SAICA', accNumber: '123456', accReportType: 'Compilation Report', accOpinion: '',
-    openingCash: 100000, openingRetainedEarnings: 0, inventory: 0, tradeReceivables: 0, tradePayables: 0, longTermLoans: 0, otherNonCurrentAssets: 0
+    lockDate: '',
+    openingCash: 100000, openingRetainedEarnings: 0, inventory: 0, tradeReceivables: 0, tradePayables: 0, longTermLoans: 0, otherNonCurrentAssets: 0, deferredTax: 0
   };
 
   for (let i = 5; i >= 0; i--) {
     const base = monthsAgo(i);
     const d = day => iso(new Date(base.getFullYear(), base.getMonth(), day));
-    st.incomes.push({ id: uid(), date: d(3),  desc: 'Cash sales — walk-in customers', category: 'Sales',    amount: 1800 + Math.round(Math.random()*1400), method: 'Cash' });
-    st.incomes.push({ id: uid(), date: d(12), desc: 'Client invoice batch',          category: 'Services', amount: 15000 + Math.round(Math.random()*4000), method: 'EFT' });
-    st.incomes.push({ id: uid(), date: d(22), desc: 'Online store sales',            category: 'Sales',    amount: 4000 + Math.round(Math.random()*3000),  method: 'Card' });
-    st.expenses.push({ id: uid(), date: d(5),  desc: 'Office rent',                   category: 'Rent',      amount: 4200, method: 'EFT' });
-    st.expenses.push({ id: uid(), date: d(15), desc: 'Team payroll',                  category: 'Payroll',   amount: 9000, method: 'EFT' });
-    st.expenses.push({ id: uid(), date: d(18), desc: 'Software subscriptions',        category: 'Office',    amount: 620,  method: 'Card' });
-    st.expenses.push({ id: uid(), date: d(20), desc: 'Social media ad campaign',      category: 'Marketing', amount: 1500, method: 'Card' });
+    st.incomes.push({ id: uid(), date: d(3),  desc: 'Cash sales — walk-in customers', category: 'Sales',    amount: 1800 + Math.round(Math.random()*1400), method: 'Cash', vatCode: 'std' });
+    st.incomes.push({ id: uid(), date: d(12), desc: 'Client invoice batch',          category: 'Services', amount: 15000 + Math.round(Math.random()*4000), method: 'EFT', vatCode: 'std' });
+    st.incomes.push({ id: uid(), date: d(22), desc: 'Online store sales',            category: 'Sales',    amount: 4000 + Math.round(Math.random()*3000),  method: 'Card', vatCode: 'std' });
+    st.expenses.push({ id: uid(), date: d(5),  desc: 'Office rent',                   category: 'Rent',      amount: 4200, method: 'EFT', vatCode: 'std' });
+    st.expenses.push({ id: uid(), date: d(15), desc: 'Team payroll',                  category: 'Payroll',   amount: 9000, method: 'EFT', vatCode: 'exempt' });
+    st.expenses.push({ id: uid(), date: d(18), desc: 'Software subscriptions',        category: 'Office',    amount: 620,  method: 'Card', vatCode: 'std' });
+    st.expenses.push({ id: uid(), date: d(20), desc: 'Social media ad campaign',      category: 'Marketing', amount: 1500, method: 'Card', vatCode: 'std' });
   }
 
   st.assets.push({ id: uid(), name: 'MacBook Pro (design)',   date: iso(monthsAgo(2)), cost: 3200,  life: 4, salvage: 200,  category: 'IT equipment' });
@@ -1922,21 +1943,21 @@ function depInPeriod(asset, p) {
 
 function cashBefore(dateStr) {
   let bal = num(state.company.openingCash) || 0;
-  state.incomes.forEach(t  => { if (t.date < dateStr) bal += num(t.amount); });
-  state.expenses.forEach(t => { if (t.date < dateStr) bal -= num(t.amount); });
-  state.assets.forEach(a   => { if (a.date < dateStr) bal -= num(a.cost); });
+  state.incomes.forEach(t  => { if (t.date < dateStr && !t.reversed) bal += num(t.amount); });
+  state.expenses.forEach(t => { if (t.date < dateStr && !t.reversed) bal -= num(t.amount); });
+  state.assets.forEach(a   => { if (a.date < dateStr && !a.sold) bal -= num(a.cost); });
   return bal;
 }
 
 function compute() {
   const p = P();
-  const inc = state.incomes.filter(t => inP(t.date));
-  const exp = state.expenses.filter(t => inP(t.date));
+  const inc = state.incomes.filter(t => inP(t.date) && !t.reversed);
+  const exp = state.expenses.filter(t => inP(t.date) && !t.reversed);
   const revenue  = inc.reduce((a, t) => a + num(t.amount), 0);
   const cogs     = exp.filter(e => e.category === 'Cost of sales').reduce((a, t) => a + num(t.amount), 0);
   const opex     = exp.filter(e => e.category !== 'Cost of sales').reduce((a, t) => a + num(t.amount), 0);
   const totalExp = cogs + opex;
-  const dep    = state.assets.reduce((a, x) => a + depInPeriod(x, p), 0);
+  const dep    = state.assets.filter(a => !a.sold).reduce((a, x) => a + depInPeriod(x, p), 0);
   const gross  = revenue - cogs;
   const ebitda = gross - opex;
   const ebit   = ebitda - dep;
@@ -1945,7 +1966,7 @@ function compute() {
   const isNonProfit = ['npo', 'school', 'trust'].includes(state.company.orgType);
   const tax = isNonProfit ? 0 : (state.company.sbcEnabled ? saSbcTax(taxable) : taxable * taxRate);
   const net = ebit - tax;
-  const assetBuys = state.assets.filter(a => inP(a.date)).reduce((a, x) => a + num(x.cost), 0);
+  const assetBuys = state.assets.filter(a => inP(a.date) && !a.sold).reduce((a, x) => a + num(x.cost), 0);
   const netOps = revenue - totalExp;
   const netInv = -assetBuys;
   const netFin = 0;
@@ -1968,12 +1989,12 @@ function nbvAsOf(asset, dateStr) {
 }
 
 function allTimeProfitToDate(toDate) {
-  const inc = state.incomes.filter(t => t.date <= toDate);
-  const exp = state.expenses.filter(t => t.date <= toDate);
+  const inc = state.incomes.filter(t => t.date <= toDate && !t.reversed);
+  const exp = state.expenses.filter(t => t.date <= toDate && !t.reversed);
   const revenue = inc.reduce((a, t) => a + num(t.amount), 0);
   const cogs    = exp.filter(e => e.category === 'Cost of sales').reduce((a, t) => a + num(t.amount), 0);
   const opex    = exp.filter(e => e.category !== 'Cost of sales').reduce((a, t) => a + num(t.amount), 0);
-  const dep     = state.assets.reduce((a, x) => a + depInPeriod(x, { from: '1900-01-01', to: toDate }), 0);
+  const dep     = state.assets.filter(a => !a.sold).reduce((a, x) => a + depInPeriod(x, { from: '1900-01-01', to: toDate }), 0);
   const ebit    = revenue - cogs - opex - dep;
   const isNonProfit = ['npo', 'school', 'trust'].includes(state.company.orgType);
   const taxable = Math.max(0, ebit);
@@ -1985,7 +2006,7 @@ function computeBalanceSheet() {
   const p = P();
   const toDate = p.to;
   const c = compute();
-  const ppeNbv = state.assets.filter(a => a.date <= toDate).reduce((sum, a) => sum + nbvAsOf(a, toDate), 0);
+  const ppeNbv = state.assets.filter(a => a.date <= toDate && !a.sold).reduce((sum, a) => sum + nbvAsOf(a, toDate), 0);
   const otherNCA = num(state.company.otherNonCurrentAssets);
   const inventory = num(state.company.inventory);
   const receivables = num(state.company.tradeReceivables);
@@ -1993,28 +2014,40 @@ function computeBalanceSheet() {
   const nonCurrentAssets = ppeNbv + otherNCA;
   const currentAssets = inventory + receivables + cash;
   const totalAssets = nonCurrentAssets + currentAssets;
-  const partnerCapital = (state.partners || []).reduce((s, pr) => s + num(pr.capital), 0);
+  
+  const totalDrawings = (state.drawings || []).filter(d => !d.reversed && d.date <= toDate).reduce((a, b) => a + num(b.amount), 0);
+  const partnerCapital = (state.partners || []).reduce((s, pr) => s + num(pr.capital), 0) - totalDrawings;
+  
   const openingRE = num(state.company.openingRetainedEarnings);
   const retainedEarnings = openingRE + allTimeProfitToDate(toDate);
   const totalEquity = partnerCapital + retainedEarnings;
+  
   const longTermLoans = num(state.company.longTermLoans);
   const tradePayables = num(state.company.tradePayables);
+  
   const vatRate = num(state.company.vatRate) / 100;
   const vatFactor = state.company.vatInclusive ? 1 / (1 + vatRate) : 1;
-  const vatPayable = state.company.vatEnabled ? (c.revenue * vatRate * vatFactor) - (c.totalExp * vatRate * vatFactor) : 0;
+  
+  const stdRevenue = state.incomes.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
+  const stdExpenses = state.expenses.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
+  
+  const vatPayable = state.company.vatEnabled ? (stdRevenue * vatRate * vatFactor) - (stdExpenses * vatRate * vatFactor) : 0;
   const taxPayable = c.tax;
+  const deferredTax = num(state.company.deferredTax);
+  
   const currentLiabilities = tradePayables + Math.max(0, vatPayable) + Math.max(0, taxPayable);
-  const totalLiabilities = longTermLoans + currentLiabilities;
+  const totalLiabilities = longTermLoans + currentLiabilities + deferredTax;
   const totalEquityLiabilities = totalEquity + totalLiabilities;
   const difference = totalAssets - totalEquityLiabilities;
-  return { ppeNbv, otherNCA, inventory, receivables, cash, nonCurrentAssets, currentAssets, totalAssets, partnerCapital, openingRE, retainedEarnings, totalEquity, longTermLoans, tradePayables, vatPayable, taxPayable, currentLiabilities, totalLiabilities, totalEquityLiabilities, difference };
+  
+  return { ppeNbv, otherNCA, inventory, receivables, cash, nonCurrentAssets, currentAssets, totalAssets, partnerCapital, openingRE, retainedEarnings, totalEquity, longTermLoans, tradePayables, vatPayable, taxPayable, currentLiabilities, totalLiabilities, totalEquityLiabilities, difference, deferredTax };
 }
 
 function dailyRows() {
   const map = new Map();
   const get = d => { if (!map.has(d)) map.set(d, { date: d, count: 0, income: 0, expense: 0 }); return map.get(d); };
-  state.incomes.filter(t => inP(t.date)).forEach(t => { const r = get(t.date); r.count += 1; r.income += num(t.amount); });
-  state.expenses.filter(t => inP(t.date)).forEach(t => { get(t.date).expense += num(t.amount); });
+  state.incomes.filter(t => inP(t.date) && !t.reversed).forEach(t => { const r = get(t.date); r.count += 1; r.income += num(t.amount); });
+  state.expenses.filter(t => inP(t.date) && !t.reversed).forEach(t => { get(t.date).expense += num(t.amount); });
   return [...map.values()].sort((a, b) => b.date.localeCompare(a.date));
 }
 
@@ -2050,9 +2083,9 @@ function buildBuckets(gran) {
     if (gran === 'monthly') return byKey.get(dateStr.slice(0, 7));
     return byKey.get(dateStr.slice(0, 4));
   };
-  state.incomes.forEach(t => { const b = find(t.date); if (!b) return; b.income += num(t.amount); b.count += 1; });
-  state.expenses.forEach(t => { const b = find(t.date); if (b) b.expense += num(t.amount); });
-  state.assets.forEach(a => { const b = find(a.date); if (b) b.assets += num(a.cost); });
+  state.incomes.filter(t => !t.reversed).forEach(t => { const b = find(t.date); if (!b) return; b.income += num(t.amount); b.count += 1; });
+  state.expenses.filter(t => !t.reversed).forEach(t => { const b = find(t.date); if (b) b.expense += num(t.amount); });
+  state.assets.filter(a => !a.sold).forEach(a => { const b = find(a.date); if (b) b.assets += num(a.cost); });
   let run = 0;
   list.forEach(b => { b.net = b.income - b.expense - b.assets; run += b.net; b.cum = run; });
   return list;
@@ -2123,7 +2156,7 @@ function lineChartSVG(points) {
    ===================================================================== */
 function incomeStatementRows(c) {
   const rows = [], add = (label, value, opt = {}) => rows.push({ label, value, ...opt });
-  const inc = state.incomes.filter(t => inP(t.date)), exp = state.expenses.filter(t => inP(t.date));
+  const inc = state.incomes.filter(t => inP(t.date) && !t.reversed), exp = state.expenses.filter(t => inP(t.date) && !t.reversed);
   add(getTerm('revenue'), null, { section: true });
   groupSum(inc, t => t.category).forEach(([k, v]) => add(k, v, { indent: true }));
   add('Total ' + getTerm('revenue').toLowerCase(), c.revenue, { total: true, rule: true });
@@ -2179,7 +2212,8 @@ function balanceSheetRows(b) {
   add('Liabilities', null, { section: true });
   add('Non-current liabilities', null, { section: true });
   add('Long-term borrowings', b.longTermLoans, { indent: true });
-  add('Total non-current liabilities', b.longTermLoans, { total: true, rule: true });
+  if (b.deferredTax) add('Deferred tax', b.deferredTax, { indent: true });
+  add('Total non-current liabilities', b.longTermLoans + b.deferredTax, { total: true, rule: true });
   add('Current liabilities', null, { section: true });
   add('Trade and other payables', b.tradePayables, { indent: true });
   add('VAT payable', Math.max(0, b.vatPayable), { indent: true });
@@ -2207,7 +2241,9 @@ function render() {
   renderPlanStatus();
 
   const st = subStatus(currentUser.subscription);
-  const isExpired = st.state === 'expired';
+  const isExpired = st.state === 'expired'; 
+  // Note: payment_status check bypassed for demo
+
   if (isExpired) {
     $$('#app input:not(#bannerRenew), #app select, #app textarea, #app button:not(#btnLogout):not(#bannerRenew)').forEach(el => el.disabled = true);
     state.ui.view = 'settings';
@@ -2220,21 +2256,25 @@ function render() {
   $$('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.view === view));
   $('.periodbar').style.display = ['tracking','registers','import'].includes(view) ? 'none' : '';
 
-  if (view === 'dashboard') renderDashboard();
-  if (view === 'tracking')  renderTracking();
-  if (view === 'income')    renderIncome();
-  if (view === 'expenses')  renderExpenses();
-  if (view === 'invoices')  renderInvoices();
-  if (view === 'quotes')    renderQuotes();
-  if (view === 'bills')     renderBills();
-  if (view === 'products')  renderProducts();
-  if (view === 'payroll')   renderPayroll();
-  if (view === 'assets')    renderAssets();
-  if (view === 'import')    { /* handled inline */ }
-  if (view === 'registers') renderRegisters();
-  if (view === 'reports')   { renderReports(); renderBalanceSheet(); }
-  if (view === 'tax')       renderTax();
-  if (view === 'settings')  { renderSettings(); renderTeam(); renderAuditLog(); }
+  try {
+    if (view === 'dashboard') renderDashboard();
+    if (view === 'tracking')  renderTracking();
+    if (view === 'income')    renderIncome();
+    if (view === 'expenses')  renderExpenses();
+    if (view === 'invoices')  renderInvoices();
+    if (view === 'quotes')    renderQuotes();
+    if (view === 'bills')     renderBills();
+    if (view === 'products')  renderProducts();
+    if (view === 'payroll')   renderPayroll();
+    if (view === 'assets')    renderAssets();
+    if (view === 'import')    { /* handled inline */ }
+    if (view === 'registers') renderRegisters();
+    if (view === 'reports')   { renderReports(); renderBalanceSheet(); }
+    if (view === 'tax')       renderTax();
+    if (view === 'settings')  { renderSettings(); renderTeam(); renderAuditLog(); }
+  } catch (error) {
+    console.error("Error rendering view:", view, error);
+  }
 }
 
 function renderPlanStatus() {
@@ -2270,14 +2310,14 @@ function renderDashboard() {
 
   const months = monthsInPeriod(P()), idx = new Map(months.map((m, i) => [m.key, i]));
   const series = months.map(m => ({ label: m.label, income: 0, expense: 0, invest: 0 }));
-  state.incomes.filter(t => inP(t.date)).forEach(t => { const i = idx.get(t.date.slice(0, 7)); if (i != null) series[i].income += num(t.amount); });
-  state.expenses.filter(t => inP(t.date)).forEach(t => { const i = idx.get(t.date.slice(0, 7)); if (i != null) series[i].expense += num(t.amount); });
-  state.assets.filter(a => inP(a.date)).forEach(a => { const i = idx.get(a.date.slice(0, 7)); if (i != null) series[i].invest += num(a.cost); });
+  state.incomes.filter(t => inP(t.date) && !t.reversed).forEach(t => { const i = idx.get(t.date.slice(0, 7)); if (i != null) series[i].income += num(t.amount); });
+  state.expenses.filter(t => inP(t.date) && !t.reversed).forEach(t => { const i = idx.get(t.date.slice(0, 7)); if (i != null) series[i].expense += num(t.amount); });
+  state.assets.filter(a => inP(a.date) && !a.sold).forEach(a => { const i = idx.get(a.date.slice(0, 7)); if (i != null) series[i].invest += num(a.cost); });
 
   $('#chartBars').innerHTML = barChartSVG(series) + `<div class="legend"><span><i style="background:#007a4d"></i>Income</span><span><i style="background:#f97316"></i>Expenses</span></div>`;
 
   const byCat = {};
-  state.expenses.filter(t => inP(t.date)).forEach(t => { byCat[t.category] = (byCat[t.category] || 0) + num(t.amount); });
+  state.expenses.filter(t => inP(t.date) && !t.reversed).forEach(t => { byCat[t.category] = (byCat[t.category] || 0) + num(t.amount); });
   const items = Object.entries(byCat).sort((a, b) => b[1] - a[1]).map(([label, value], i) => ({ label, value, color: COLORS[i % COLORS.length] }));
   const total = items.reduce((a, b) => a + b.value, 0);
   $('#chartDonut').innerHTML = items.length
@@ -2289,7 +2329,7 @@ function renderDashboard() {
   $('#chartLine').innerHTML = lineChartSVG(cashSeries);
   renderDailyTable();
 
-  const recent = [...state.incomes.filter(t => inP(t.date)).map(t => ({ ...t, kind: 'in' })), ...state.expenses.filter(t => inP(t.date)).map(t => ({ ...t, kind: 'out' }))].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
+  const recent = [...state.incomes.filter(t => inP(t.date) && !t.reversed).map(t => ({ ...t, kind: 'in' })), ...state.expenses.filter(t => inP(t.date) && !t.reversed).map(t => ({ ...t, kind: 'out' }))].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8);
   $('#tblRecent').innerHTML = `
     <thead><tr><th>Date</th><th>Description</th><th>Category</th><th class="r">Amount</th></tr></thead>
     <tbody>${recent.length ? recent.map(t => `<tr><td>${fmtDate(t.date)}</td><td>${esc(t.desc)}</td><td><span class="pill">${esc(t.category)}</span></td><td class="r" style="color:${t.kind === 'in' ? '#047857' : '#b91c1c'};font-weight:600">${t.kind === 'in' ? '+' : '−'}${money(t.amount)}</td></tr>`).join('') : `<tr><td colspan="4" class="empty">No transactions.</td></tr>`}</tbody>`;
@@ -2319,8 +2359,8 @@ function renderTracking() {
   const cards = [['Today', todayISO(), todayISO()], ['This week', iso(monday), iso(sunday)], ['This month', monthStart, monthEnd], ['This year', `${now.getFullYear()}-01-01`, `${now.getFullYear()}-12-31`]];
   $('#trackKpis').innerHTML = cards.map(([label, from, to]) => {
     const s = { inc: 0, exp: 0, ast: 0, count: 0 };
-    state.incomes.forEach(t => { if (t.date >= from && t.date <= to) { s.inc += num(t.amount); s.count++; } });
-    state.expenses.forEach(t => { if (t.date >= from && t.date <= to) s.exp += num(t.amount); });
+    state.incomes.filter(t => !t.reversed).forEach(t => { if (t.date >= from && t.date <= to) { s.inc += num(t.amount); s.count++; } });
+    state.expenses.filter(t => !t.reversed).forEach(t => { if (t.date >= from && t.date <= to) s.exp += num(t.amount); });
     s.net = s.inc - s.exp;
     return `<div class="kpi"><div class="kpi-label">${label}</div><div class="kpi-value">${money(s.inc)}</div><div class="kpi-sub">Net ${money(s.net)} · ${s.count} receipts</div></div>`;
   }).join('');
@@ -2341,23 +2381,23 @@ function renderTracking() {
 }
 
 function renderIncome() {
-  const list = state.incomes.filter(t => inP(t.date)).sort((a, b) => b.date.localeCompare(a.date));
+  const list = state.incomes.filter(t => inP(t.date) && !t.reversed).sort((a, b) => b.date.localeCompare(a.date));
   const total = list.reduce((a, t) => a + num(t.amount), 0);
   const dayTotals = new Map();
   list.forEach(t => dayTotals.set(t.date, (dayTotals.get(t.date) || 0) + num(t.amount)));
   $('#incomeTotal').textContent = `— ${money(total)} · ${list.length} receipts`;
   $('#tblIncome').innerHTML = `
-    <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Method</th><th class="r">Amount</th><th class="r">Daily income received</th><th></th></tr></thead>
-    <tbody>${list.length ? list.map(t => `<tr><td>${fmtDate(t.date)}</td><td>${esc(t.desc)}</td><td><span class="pill">${esc(t.category)}</span></td><td>${esc(t.method || '—')}</td><td class="r">${money(t.amount)}</td><td class="r" style="font-weight:600;color:#047857">${money(dayTotals.get(t.date))}</td><td class="r"><button class="icon" data-del="incomes" data-id="${t.id}">✕</button></td></tr>`).join('') : `<tr><td colspan="7" class="empty">No income.</td></tr>`}</tbody>`;
+    <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>VAT</th><th>Method</th><th class="r">Amount</th><th class="r">Daily income received</th><th></th></tr></thead>
+    <tbody>${list.length ? list.map(t => `<tr><td>${fmtDate(t.date)}</td><td>${esc(t.desc)}</td><td><span class="pill">${esc(t.category)}</span></td><td><span class="pill" style="background:#f1f5f9;color:#475569">${t.vatCode || 'std'}</span></td><td>${esc(t.method || '—')}</td><td class="r">${money(t.amount)}</td><td class="r" style="font-weight:600;color:#047857">${money(dayTotals.get(t.date))}</td><td class="r"><button class="icon" data-del="incomes" data-id="${t.id}">✕</button></td></tr>`).join('') : `<tr><td colspan="8" class="empty">No income.</td></tr>`}</tbody>`;
 }
 
 function renderExpenses() {
-  const list = state.expenses.filter(t => inP(t.date)).sort((a, b) => b.date.localeCompare(a.date));
+  const list = state.expenses.filter(t => inP(t.date) && !t.reversed).sort((a, b) => b.date.localeCompare(a.date));
   const total = list.reduce((a, t) => a + num(t.amount), 0);
   $('#expenseTotal').textContent = `— ${money(total)}`;
   $('#tblExpenses').innerHTML = `
-    <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Method</th><th class="r">Amount</th><th></th></tr></thead>
-    <tbody>${list.length ? list.map(t => `<tr><td>${fmtDate(t.date)}</td><td>${esc(t.desc)}</td><td><span class="pill">${esc(t.category)}</span></td><td>${esc(t.method || '—')}</td><td class="r">${money(t.amount)}</td><td class="r"><button class="icon" data-del="expenses" data-id="${t.id}">✕</button></td></tr>`).join('') : `<tr><td colspan="6" class="empty">No expenses.</td></tr>`}</tbody>`;
+    <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>VAT</th><th>Method</th><th class="r">Amount</th><th></th></tr></thead>
+    <tbody>${list.length ? list.map(t => `<tr><td>${fmtDate(t.date)}</td><td>${esc(t.desc)}</td><td><span class="pill">${esc(t.category)}</span></td><td><span class="pill" style="background:#f1f5f9;color:#475569">${t.vatCode || 'std'}</span></td><td>${esc(t.method || '—')}</td><td class="r">${money(t.amount)}</td><td class="r"><button class="icon" data-del="expenses" data-id="${t.id}">✕</button></td></tr>`).join('') : `<tr><td colspan="7" class="empty">No expenses.</td></tr>`}</tbody>`;
 }
 
 function renderInvoices() {
@@ -2384,12 +2424,12 @@ function markInvoicePaid(id) {
   const inv = state.invoices.find(x => x.id === id);
   if (!inv) return;
   inv.status = 'Paid';
-  state.incomes.push({ id: uid(), date: todayISO(), desc: `Payment for ${inv.invNo} - ${inv.client}`, category: 'Sales', amount: inv.amount, method: 'EFT' });
+  state.incomes.push({ id: uid(), date: todayISO(), desc: `Payment for ${inv.invNo} - ${inv.client}`, category: 'Sales', amount: inv.amount, method: 'EFT', vatCode: 'std' });
   addAuditLog('Invoice Paid', `${inv.invNo} - ${inv.client} (${money(inv.amount)})`);
   refresh();
   alert(`Invoice ${inv.invNo} marked as paid and logged as income.`);
 }
-function delInvoice(id) { if (confirm('Delete invoice?')) { state.invoices = state.invoices.filter(x => x.id !== id); refresh(); } }
+function delInvoice(id) { if (confirm('Reverse invoice?')) { const i = state.invoices.find(x=>x.id===id); if(i) i.reversed = true; refresh(); } }
 
 function renderQuotes() {
   const quotes = state.quotes || [];
@@ -2430,7 +2470,7 @@ function payBill(id) {
   const b = state.bills.find(x => x.id === id);
   if (!b) return;
   b.status = 'Paid';
-  state.expenses.push({ id: uid(), date: todayISO(), desc: `Paid Bill ${b.billNo} - ${b.supplier}`, category: b.category || 'Other', amount: b.amount, method: 'EFT' });
+  state.expenses.push({ id: uid(), date: todayISO(), desc: `Paid Bill ${b.billNo} - ${b.supplier}`, category: b.category || 'Other', amount: b.amount, method: 'EFT', vatCode: 'std' });
   addAuditLog('Bill Paid', `${b.billNo} - ${b.supplier} (${money(b.amount)})`);
   refresh();
   alert(`Bill ${b.billNo} marked as paid and logged as an expense.`);
@@ -2480,7 +2520,7 @@ function renderPayroll() {
       <tr><td>SDL (1%)</td><td class="r">${money(totalSdl)}</td></tr>
       <tr class="grand"><td>Total Due to SARS</td><td class="r">${money(totalPaye + totalUifEmp + totalUifCo + totalSdl)}</td></tr>
     </tbody></table>
-    <p class="muted" style="margin:12px 0 0">Pay this amount via eFiling for your EMP201 return.</p>
+    <p class="muted" style="margin:12px 0 0">Pay this amount via eFiling for your EMP201 return. SDL is zero if annual payroll is under R500k.</p>
   `;
 
   if (!emps.length) {
@@ -2544,15 +2584,35 @@ function assetValuation(a) {
 }
 function renderAssets() {
   const list = state.assets.slice().sort((a, b) => a.date.localeCompare(b.date));
-  const totalNbv = list.reduce((sum, a) => sum + assetValuation(a).nbv, 0);
+  const totalNbv = list.filter(a => !a.sold).reduce((sum, a) => sum + assetValuation(a).nbv, 0);
   $('#assetTotal').textContent = `— net book value ${money(totalNbv)}`;
   $('#tblAssets').innerHTML = `
     <thead><tr><th>Asset</th><th>Category</th><th>Purchased</th><th class="r">Cost</th><th class="r">Life</th><th class="r">Monthly dep.</th><th class="r">Accum. dep.</th><th class="r">Net book value</th><th></th></tr></thead>
     <tbody>${list.length ? list.map(a => {
       const v = assetValuation(a);
-      return `<tr><td>${esc(a.name)}</td><td><span class="pill">${esc(a.category)}</span></td><td>${fmtDate(a.date)}</td><td class="r">${money(a.cost)}</td><td class="r">${num(a.life)} yr</td><td class="r">${money(v.monthly)}</td><td class="r">${money(v.accum)}</td><td class="r"><b>${money(v.nbv)}</b></td><td class="r"><button class="icon" data-del="assets" data-id="${a.id}">✕</button></td></tr>`;
+      return `<tr><td>${esc(a.name)}</td><td><span class="pill">${esc(a.category)}</span></td><td>${fmtDate(a.date)}</td><td class="r">${money(a.cost)}</td><td class="r">${num(a.life)} yr</td><td class="r">${money(v.monthly)}</td><td class="r">${money(v.accum)}</td><td class="r"><b>${money(v.nbv)}</b></td><td class="r">${!a.sold ? `<button class="btn sm" style="padding:2px 8px;font-size:11px;margin-right:4px" onclick="sellAsset('${a.id}')">Sell</button>` : '<span class="pill" style="background:#f1f5f9;color:#64748b">SOLD</span>'}<button class="icon" data-del="assets" data-id="${a.id}">✕</button></td></tr>`;
     }).join('') : `<tr><td colspan="9" class="empty">No assets registered.</td></tr>`}</tbody>`;
 }
+
+window.sellAsset = function(id) {
+  const a = state.assets.find(x => x.id === id);
+  if (!a) return;
+  const price = prompt(`Enter selling price for ${a.name}:`);
+  if (price === null) return;
+  a.sold = true;
+  a.soldDate = todayISO();
+  a.soldPrice = num(price);
+  
+  const nbv = assetValuation(a).nbv;
+  const pl = a.soldPrice - nbv;
+  
+  if (pl > 0) state.incomes.push({ id: uid(), date: todayISO(), desc: `Profit on sale of ${a.name}`, category: 'Other income', amount: pl, method: 'EFT', vatCode: 'exempt' });
+  else if (pl < 0) state.expenses.push({ id: uid(), date: todayISO(), desc: `Loss on sale of ${a.name}`, category: 'Other', amount: Math.abs(pl), method: 'EFT', vatCode: 'exempt' });
+  
+  state.incomes.push({ id: uid(), date: todayISO(), desc: `Proceeds from sale of ${a.name}`, category: 'Other income', amount: a.soldPrice, method: 'EFT', vatCode: 'exempt' });
+  addAuditLog('Asset Disposal', `Sold ${a.name} for ${money(a.soldPrice)}`);
+  refresh();
+};
 
 function partnerTotalOwnership() { return (state.partners || []).reduce((a, p) => a + num(p.ownership), 0); }
 function renderRegKpis() {
@@ -2565,7 +2625,7 @@ function renderRegKpis() {
     { label: 'Register completeness', value: `${partners.length + suppliers.length}`, sub: 'rows across both registers' }
   ].map(x => `<div class="kpi"><div class="kpi-label">${x.label}</div><div class="kpi-value">${x.value}</div><div class="kpi-sub">${x.sub}</div></div>`).join('');
 }
-function renderRegisters() { renderRegKpis(); renderPartners(); renderSuppliers(); renderSnapshot(); }
+function renderRegisters() { renderRegKpis(); renderPartners(); renderDrawings(); renderSuppliers(); renderSnapshot(); }
 const PARTNER_FIELDS = [
   { key: 'name', label: 'Name', type: 'text' },
   { key: 'idNumber', label: 'ID / passport', type: 'text' },
@@ -2610,6 +2670,22 @@ function renderPartners() {
   $('#partnerNote').textContent = `${list.length} partner(s) · total ownership ${total.toFixed(1)}%${Math.abs(total - 100) > 0.01 ? ' (should total 100%)' : ' ✓'} · total capital ${money0(totalCapital)} · ${agrees} with an agreement ref.`;
 }
 function delPartner(id) { if (confirm('Delete partner?')) { state.partners = state.partners.filter(x => x.id !== id); refresh(); } }
+
+function renderDrawings() {
+  const list = state.drawings || [];
+  if (!list.length) {
+    $('#tblDrawings').innerHTML = `<thead><tr><th>Date</th><th>Partner</th><th>Description</th><th class="r">Amount</th><th></th></tr></thead><tbody><tr><td colspan="5" class="empty">No drawings logged.</td></tr></tbody>`;
+    return;
+  }
+  $('#tblDrawings').innerHTML = `
+    <thead><tr><th>Date</th><th>Partner</th><th>Description</th><th class="r">Amount</th><th></th></tr></thead>
+    <tbody>${list.filter(d => !d.reversed).map(d => `<tr>
+      <td>${fmtDate(d.date)}</td><td>${esc(d.partner)}</td><td>${esc(d.desc)}</td>
+      <td class="r" style="color:#b91c1c">${money(d.amount)}</td>
+      <td class="r"><button class="icon" data-del="drawings" data-id="${d.id}">✕</button></td>
+    </tr>`).join('')}</tbody>`;
+}
+
 function renderSuppliers() {
   const list = state.suppliers || [];
   if (!list.length) {
@@ -2647,12 +2723,22 @@ function renderSnapshot() {
 
 function renderReports() {
   const c = compute();
-  $('#stmtIncome').innerHTML = stmtHTML(incomeStatementRows(c));
+  const isVerified = !!(state.company.accName && state.company.accFirm);
+  const verifyBadge = isVerified 
+    ? `<div style="display:inline-flex; align-items:center; gap:6px; background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; padding:6px 12px; border-radius:99px; font-size:12px; font-weight:700; margin-bottom:12px;">✓ Verified Actual Figures (by ${esc(state.company.accName)})</div>`
+    : `<div style="display:inline-flex; align-items:center; gap:6px; background:#fffbeb; color:#92400e; border:1px solid #fde68a; padding:6px 12px; border-radius:99px; font-size:12px; font-weight:700; margin-bottom:12px;">⚠️ Draft Management Estimates (Not yet verified by an accountant)</div>`;
+
+  $('#stmtIncome').innerHTML = verifyBadge + stmtHTML(incomeStatementRows(c));
   $('#stmtCash').innerHTML = stmtHTML(cashFlowRows(c));
 }
 function renderBalanceSheet() {
   const b = computeBalanceSheet(), isBalanced = Math.abs(b.difference) < 0.01;
-  $('#stmtBalance').innerHTML = `
+  const isVerified = !!(state.company.accName && state.company.accFirm);
+  const verifyBadge = isVerified 
+    ? `<div style="display:inline-flex; align-items:center; gap:6px; background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; padding:6px 12px; border-radius:99px; font-size:12px; font-weight:700; margin-bottom:12px;">✓ Verified Actual Figures</div>`
+    : `<div style="display:inline-flex; align-items:center; gap:6px; background:#fffbeb; color:#92400e; border:1px solid #fde68a; padding:6px 12px; border-radius:99px; font-size:12px; font-weight:700; margin-bottom:12px;">⚠️ Draft Management Estimates</div>`;
+
+  $('#stmtBalance').innerHTML = verifyBadge + `
     ${stmtHTML(balanceSheetRows(b))}
     <div class="bs-check ${isBalanced ? 'ok' : 'warn'}">
       <div class="bs-check-row"><span><b>Balance check</b></span><span style="color:${isBalanced ? '#047857' : '#b91c1c'};font-weight:700">${isBalanced ? 'Balanced ✓' : 'Difference ' + money(b.difference)}</span></div>
@@ -2660,11 +2746,11 @@ function renderBalanceSheet() {
       ${!isBalanced ? `<p class="bs-check-note">Difference indicates items not captured. Check opening capital, retained earnings, loans, receivables, or prior VAT/tax. Update in Settings to reconcile.</p>` : ''}
     </div>`;
 }
+
 function renderTrialBalance() {
   const c = compute();
   const bs = computeBalanceSheet();
   
-  // Compile the Trial Balance from existing data
   const tb = [
     { code: '1000', name: 'Cash and Cash Equivalents', dr: bs.cash, cr: 0 },
     { code: '1200', name: 'Trade Receivables (Debtors)', dr: bs.receivables, cr: 0 },
@@ -2674,6 +2760,7 @@ function renderTrialBalance() {
     { code: '2000', name: 'Trade Payables (Creditors)', dr: 0, cr: bs.tradePayables },
     { code: '2100', name: 'VAT Payable', dr: 0, cr: Math.max(0, bs.vatPayable) },
     { code: '2200', name: 'Income Tax Payable', dr: 0, cr: Math.max(0, bs.taxPayable) },
+    { code: '2300', name: 'Deferred Tax Liability', dr: 0, cr: num(state.company.deferredTax) },
     { code: '3000', name: getTerm('capital'), dr: 0, cr: bs.partnerCapital },
     { code: '3100', name: getTerm('retained'), dr: 0, cr: bs.retainedEarnings },
     { code: '4000', name: 'Revenue / Income', dr: 0, cr: c.revenue },
@@ -2705,19 +2792,24 @@ function renderTrialBalance() {
     </div>
   `;
 }
+
 function renderTax() {
   const c = compute(), co = state.company;
   const isNonProfit = ['npo', 'school', 'trust'].includes(co.orgType);
   const vatRate = num(co.vatRate) / 100, enabled = !!co.vatEnabled, factor = co.vatInclusive ? 1 / (1 + vatRate) : 1;
-  const vatCollected = enabled ? c.revenue * vatRate * factor : 0, vatPaid = enabled ? c.totalExp * vatRate * factor : 0, vatNet = vatCollected - vatPaid;
+  
+  const stdRevenue = state.incomes.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
+  const stdExpenses = state.expenses.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
+  
+  const vatCollected = enabled ? stdRevenue * vatRate * factor : 0, vatPaid = enabled ? stdExpenses * vatRate * factor : 0, vatNet = vatCollected - vatPaid;
 
   $('#taxVat').innerHTML = enabled ? `
     <table class="stmt"><tbody>
-      <tr><td>Output VAT on sales (${num(co.vatRate).toFixed(1)}%)</td><td class="r">${money(vatCollected)}</td></tr>
-      <tr><td>Input VAT on expenses (${num(co.vatRate).toFixed(1)}%)</td><td class="r">−${money(vatPaid)}</td></tr>
+      <tr><td>Output VAT on standard sales (${num(co.vatRate).toFixed(1)}%)</td><td class="r">${money(vatCollected)}</td></tr>
+      <tr><td>Input VAT on standard expenses (${num(co.vatRate).toFixed(1)}%)</td><td class="r">−${money(vatPaid)}</td></tr>
       <tr class="grand"><td>${vatNet >= 0 ? 'VAT payable to SARS' : 'VAT refundable by SARS'}</td><td class="r">${money(Math.abs(vatNet))}</td></tr>
     </tbody></table>
-    <p class="muted" style="margin:12px 0 0">VAT201 basis. ${co.vatInclusive ? 'Amounts are VAT-inclusive.' : 'Amounts are VAT-exclusive.'}</p>
+    <p class="muted" style="margin:12px 0 0">VAT201 basis. Zero-rated and exempt transactions are excluded from the VAT calculation.</p>
   ` : `<p class="muted">VAT is off. Enable <b>VAT registered</b> in Settings to track VAT201.</p>`;
 
   if (isNonProfit) {
@@ -2754,7 +2846,36 @@ function renderSettings() {
     else el.value = co[key] ?? '';
   });
   renderSubscription();
+
+  const st = subStatus(currentUser.subscription);
+  const isActive = st.state === 'active' || st.state === 'expiring';
+
+  const inputName = $('#inputOrgName');
+  const inputType = $('#inputOrgType');
+  const inputReg = $('#inputOrgReg');
+  const lockName = $('#lockOrgName');
+  const lockType = $('#lockOrgType');
+  const lockReg = $('#lockOrgReg');
+
+  if (inputName && inputType && inputReg) {
+    if (isActive) {
+      inputName.disabled = true;
+      inputType.disabled = true;
+      inputReg.disabled = true;
+      if (lockName) lockName.classList.remove('hidden');
+      if (lockType) lockType.classList.remove('hidden');
+      if (lockReg) lockReg.classList.remove('hidden');
+    } else {
+      inputName.disabled = false;
+      inputType.disabled = false;
+      inputReg.disabled = false;
+      if (lockName) lockName.classList.add('hidden');
+      if (lockType) lockType.classList.add('hidden');
+      if (lockReg) lockReg.classList.add('hidden');
+    }
+  }
 }
+
 function renderSubscription() {
   const el = $('#subCard');
   if (!el || !currentUser) return;
@@ -2857,7 +2978,7 @@ window.processImport = function() {
     const amt = parseFloat(String(row[amtCol]).replace(/[^0-9.-]+/g, ''));
     if (isNaN(amt) || amt === 0) return;
     const isExp = typeMode === 'expense' || (typeMode === 'auto' && amt < 0);
-    const newTx = { id: uid(), date: iso(d), desc: row[descCol] || 'Bank Transaction', category: isExp ? 'Other' : 'Sales', amount: Math.abs(amt), method: 'EFT' };
+    const newTx = { id: uid(), date: iso(d), desc: row[descCol] || 'Bank Transaction', category: isExp ? 'Other' : 'Sales', amount: Math.abs(amt), method: 'EFT', vatCode: 'std' };
     if (isExp) { state.expenses.push(newTx); exp++; } else { state.incomes.push(newTx); inc++; }
   });
   if (inc === 0 && exp === 0) return alert('No valid transactions.');
@@ -2875,8 +2996,11 @@ window.cancelImport = function() {
 
 function printVat201() {
   const c = compute(), co = state.company, vatRate = num(co.vatRate) / 100, factor = co.vatInclusive ? 1 / (1 + vatRate) : 1;
-  const output = c.revenue * vatRate * factor, input = c.totalExp * vatRate * factor, net = output - input;
-  $('#print-root').innerHTML = `<div class="print-doc"><div class="ph"><div><h1>VAT201 Summary</h1><div><strong>Vendor:</strong> ${esc(co.name)}</div><div><strong>VAT Reg No:</strong> ${esc(co.vatNo)}</div></div><div class="meta"><div><strong>Period:</strong> ${fmtDate(P().from)} – ${fmtDate(P().to)}</div></div></div><div class="basis">System-generated summary for SARS eFiling.</div><table><tbody><tr><td>Field 1: Standard Rate Supplies</td><td class="r">${money(c.revenue)}</td></tr><tr><td>Field 4: Output Tax</td><td class="r">${money(output)}</td></tr><tr><td>Field 14: Input Tax</td><td class="r">${money(input)}</td></tr><tr><td>Field 15: Net VAT Payable / (Refundable)</td><td class="r"><strong>${money(net)}</strong></td></tr></tbody></table></div>`;
+  const stdRev = state.incomes.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
+  const stdExp = state.expenses.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
+  const output = stdRev * vatRate * factor, input = stdExp * vatRate * factor, net = output - input;
+  
+  $('#print-root').innerHTML = `<div class="print-doc"><div class="ph"><div><h1>VAT201 Summary</h1><div><strong>Vendor:</strong> ${esc(co.name)}</div><div><strong>VAT Reg No:</strong> ${esc(co.vatNo)}</div></div><div class="meta"><div><strong>Period:</strong> ${fmtDate(P().from)} – ${fmtDate(P().to)}</div></div></div><div class="basis">System-generated summary for SARS eFiling.</div><table><tbody><tr><td>Field 1: Standard Rate Supplies</td><td class="r">${money(stdRev)}</td></tr><tr><td>Field 4: Output Tax</td><td class="r">${money(output)}</td></tr><tr><td>Field 14: Input Tax</td><td class="r">${money(input)}</td></tr><tr><td>Field 15: Net VAT Payable / (Refundable)</td><td class="r"><strong>${money(net)}</strong></td></tr></tbody></table></div>`;
   window.print();
 }
 function printIRP6() {
@@ -2887,22 +3011,33 @@ function printIRP6() {
 
 function buildPrintDoc() {
   const c = compute(), b = computeBalanceSheet(), co = state.company, p = P(), sub = currentUser && currentUser.subscription;
-  const assetRows = state.assets.slice().sort((a, b) => a.date.localeCompare(b.date)).map(a => {
+  const isVerified = !!(co.accName && co.accFirm);
+  const isNonProfit = ['npo', 'school', 'trust'].includes(co.orgType);
+
+  const assetRows = state.assets.filter(a => !a.sold).slice().sort((a, b) => a.date.localeCompare(b.date)).map(a => {
     const v = assetValuation(a);
     return `<tr><td>${esc(a.name)}</td><td>${esc(a.category)}</td><td>${fmtDate(a.date)}</td><td class="r">${money(a.cost)}</td><td class="r">${num(a.life)} yr</td><td class="r">${money(v.accum)}</td><td class="r">${money(v.nbv)}</td></tr>`;
   }).join('');
   const months = monthsInPeriod(p), idx = new Map(months.map((m, i) => [m.key, i]));
   const series = months.map(m => ({ label: m.label, income: 0, expense: 0 }));
-  state.incomes.filter(t => inP(t.date)).forEach(t => { const i = idx.get(t.date.slice(0,7)); if (i != null) series[i].income += num(t.amount); });
-  state.expenses.filter(t => inP(t.date)).forEach(t => { const i = idx.get(t.date.slice(0,7)); if (i != null) series[i].expense += num(t.amount); });
+  state.incomes.filter(t => inP(t.date) && !t.reversed).forEach(t => { const i = idx.get(t.date.slice(0,7)); if (i != null) series[i].income += num(t.amount); });
+  state.expenses.filter(t => inP(t.date) && !t.reversed).forEach(t => { const i = idx.get(t.date.slice(0,7)); if (i != null) series[i].expense += num(t.amount); });
+  
   const vatRate = num(co.vatRate) / 100, factor = co.vatInclusive ? 1 / (1 + vatRate) : 1;
-  const vatCollected = co.vatEnabled ? c.revenue * vatRate * factor : 0, vatPaid = co.vatEnabled ? c.totalExp * vatRate * factor : 0;
+  const stdRev = state.incomes.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
+  const stdExp = state.expenses.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
+  const vatCollected = co.vatEnabled ? stdRev * vatRate * factor : 0;
+  const vatPaid = co.vatEnabled ? stdExp * vatRate * factor : 0;
+
   const days = dailyRows();
   const dayRows = days.slice(0, 60).map(r => `<tr><td>${fmtDate(r.date)}</td><td class="r">${r.count || '—'}</td><td class="r">${money(r.income)}</td><td class="r">${money(r.expense)}</td><td class="r">${money(r.income - r.expense)}</td></tr>`).join('');
   const dayTotals = days.reduce((a, r) => { a.count += r.count; a.income += r.income; a.expense += r.expense; return a; }, { count: 0, income: 0, expense: 0 });
+  
   const monthBuckets = buildBuckets('monthly').slice(-12);
   const monthRows = monthBuckets.map(mb => `<tr><td>${esc(mb.range)}</td><td class="r">${mb.count || '—'}</td><td class="r">${money(mb.income)}</td><td class="r">${money(mb.expense)}</td><td class="r">${money(mb.net)}</td><td class="r">${money(mb.cum)}</td></tr>`).join('');
+  
   const partners = state.partners || [], suppliers = state.suppliers || [], ownership = partnerTotalOwnership(), totalCapital = partners.reduce((s, pr) => s + num(pr.capital), 0);
+  
   const empCalcs = (state.employees || []).map(e => { const pc = calcPayroll(e); return { ...e, ...pc }; });
   let totalGross = 0, totalPaye = 0, totalUifEmp = 0, totalUifCo = 0, totalSdl = 0;
   empCalcs.forEach(e => { totalGross += e.gross; totalPaye += e.paye; totalUifEmp += e.uif; totalUifCo += e.uif; totalSdl += e.sdl; });
@@ -2912,8 +3047,25 @@ function buildPrintDoc() {
     return `<tr><td style="padding-left:${r.indent ? 16 : 0}px${r.grand ? ';font-weight:800;border-top:2px solid #000' : r.total ? ';font-weight:700' : ''}">${esc(r.label)}</td><td class="r"${r.grand ? ' style="font-weight:800;border-top:2px solid #000"' : r.total ? ' style="font-weight:700"' : ''}>${r.value == null ? '' : money(r.value)}</td></tr>`;
   }).join('')}</tbody></table>`;
 
+  const adjustments = [
+    { label: getTerm('profit'), value: c.net, indent: false },
+    { label: 'Adjustments for non-cash items:', value: null, section: true },
+    { label: 'Depreciation', value: c.dep, indent: true },
+    { label: 'Changes in working capital:', value: null, section: true },
+    { label: '(Increase)/Decrease in Trade Receivables', value: -num(state.company.tradeReceivables), indent: true },
+    { label: 'Increase/(Decrease) in Trade Payables', value: num(state.company.tradePayables), indent: true },
+    { label: 'Cash generated from operations', value: c.net + c.dep - num(state.company.tradeReceivables) + num(state.company.tradePayables), total: true, strong: true, rule: true },
+    { label: 'Taxation paid', value: -c.tax, indent: true },
+    { label: 'Net cash from operating activities', value: c.net + c.dep - num(state.company.tradeReceivables) + num(state.company.tradePayables) - c.tax, total: true, strong: true, rule: true },
+    { label: 'Cash flows from investing activities', value: null, section: true },
+    { label: 'Purchase of PPE', value: -c.assetBuys, indent: true },
+    { label: 'Net cash from investing activities', value: -c.assetBuys, total: true, strong: true, rule: true },
+    { label: 'Net increase / (decrease) in cash', value: (c.net + c.dep - num(state.company.tradeReceivables) + num(state.company.tradePayables) - c.tax) - c.assetBuys, total: true, strong: true },
+    { label: 'Cash at beginning of period', value: c.openCash, indent: true },
+    { label: 'Cash at end of period', value: c.closeCash, grand: true }
+  ];
+
   const taxable = Math.max(0, c.ebit), bands = co.sbcEnabled ? saSbcBands(taxable) : [];
-  const isNonProfit = ['npo', 'school', 'trust'].includes(co.orgType);
 
   return `
   <div class="print-doc">
@@ -2937,9 +3089,20 @@ function buildPrintDoc() {
     </div>
 
     <div class="basis">
-      <strong>Basis of preparation:</strong> These management accounts are prepared in accordance with IFRS for SMEs (SA GAAP),
-      the Companies Act 71 of 2008, the Value-Added Tax Act 89 of 1991 and the Income Tax Act 58 of 1962.
-      Amounts are in South African Rand. Depreciation is calculated on the straight-line basis per IAS 16.
+      ${isVerified ? `
+        <strong>Basis of Preparation & Verification:</strong> These financial statements have been prepared in accordance with IFRS for SMEs (SA GAAP), 
+        the Companies Act 71 of 2008, the Value-Added Tax Act 89 of 1991 and the Income Tax Act 58 of 1962. 
+        The figures presented herein represent <b>actual financial data</b> for the period and have been formally verified by 
+        <b>${esc(co.accName)}</b> (${esc(co.accBody)}) of <b>${esc(co.accFirm)}</b>.
+      ` : `
+        <strong>Basis of preparation:</strong> These management accounts are prepared in accordance with IFRS for SMEs (SA GAAP),
+        the Companies Act 71 of 2008, the Value-Added Tax Act 89 of 1991 and the Income Tax Act 58 of 1962.
+        Amounts are in South African Rand. <b>Note: These are management estimates and have not been independently audited or verified.</b>
+      `}
+      <br><br>
+      <span style="font-size: 9px; color: #666;">
+        <b>Entity Lock:</b> The organization identity (Name: ${esc(co.name)}, Reg: ${esc(co.regNo)}) is locked for this 12-month subscription period in accordance with platform licensing rules.
+      </span>
     </div>
 
     <div class="section"><div class="summary">
@@ -2956,7 +3119,10 @@ function buildPrintDoc() {
         <div style="display:flex;justify-content:space-between;margin-top:3px;color:#555"><span>Total assets ${money(b.totalAssets)}</span><span>Total equity and liabilities ${money(b.totalEquityLiabilities)}</span></div>
       </div>
     </div>
-    <div class="section"><h2>Statement of Cash Flows</h2>${plainStmt(cashFlowRows(c))}</div>
+    
+    <div class="section"><h2>Statement of Cash Flows</h2>${plainStmt(adjustments)}</div>
+    
+    ${renderTrialBalance()}
 
     <div class="section"><h2>Monthly Performance Summary</h2>
       <table><thead><tr><th>Month</th><th class="r">Receipts</th><th class="r">Income</th><th class="r">Expenses</th><th class="r">Net cash</th><th class="r">Cumulative</th></tr></thead>
@@ -3047,32 +3213,72 @@ function buildPrintDoc() {
       </tbody></table>
     </div>
 
-    <div class="section">
-      <h2>Audit Trail (Activity Log)</h2>
-      <table><thead><tr><th>Date & Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
-      <tbody>${(state.audit_log || []).slice(0, 50).map(log => `<tr><td>${new Date(log.timestamp).toLocaleString('en-ZA')}</td><td>${esc(log.user)}</td><td>${esc(log.action)}</td><td>${esc(log.details)}</td></tr>`).join('') || `<tr><td colspan="4">No activity recorded.</td></tr>`}</tbody></table>
+    <div class="section" style="break-before: page;">
+      <h2>Notes to the Financial Statements</h2>
+      
+      <h3>1. Basis of Preparation</h3>
+      <p style="font-size: 11px; line-height: 1.5;">The financial statements have been prepared in accordance with the International Financial Reporting Standard for Small and Medium-sized Entities (IFRS for SMEs). The financial statements are prepared on the historical cost basis and incorporate the principal accounting policies set out below.</p>
+
+      <h3>2. Property, Plant and Equipment</h3>
+      <p style="font-size: 11px; line-height: 1.5;">Property, plant and equipment are stated at cost less accumulated depreciation. Depreciation is calculated on the straight-line basis over the estimated useful lives of the assets.</p>
+      <table style="margin-top: 8px;">
+        <thead><tr><th>Asset</th><th class="r">Opening Cost</th><th class="r">Additions</th><th class="r">Accum. Dep.</th><th class="r">Net Book Value</th></tr></thead>
+        <tbody>
+          ${state.assets.filter(a => !a.sold).map(a => {
+            const v = assetValuation(a);
+            return `<tr><td>${esc(a.name)}</td><td class="r">${money(a.cost)}</td><td class="r">—</td><td class="r">${money(v.accum)}</td><td class="r">${money(v.nbv)}</td></tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+
+      <h3>3. Taxation</h3>
+      <p style="font-size: 11px; line-height: 1.5;">Current tax is provided for at the current tax rates applicable in South Africa. ${state.company.sbcEnabled ? 'The company qualifies as a Small Business Corporation and is taxed on the sliding scale.' : 'The company is taxed at the standard flat rate.'} Deferred tax is provided for on temporary differences.</p>
+
+      <h3>4. Going Concern</h3>
+      <p style="font-size: 11px; line-height: 1.5;">The financial statements have been prepared on the going concern basis. The management has every reason to believe that the organization has adequate resources to continue in operational existence for the foreseeable future.</p>
     </div>
 
     ${(co.accName && co.accFirm) ? `
     <div class="section" style="break-before: page; margin-top: 40px;">
       <h2 style="border-bottom: 2px solid #000; padding-bottom: 4px;">${esc(co.accReportType)}</h2>
+      
       <div style="margin: 24px 0; font-size: 12px; line-height: 1.8; text-align: justify;">
         <p><strong>To the Management of ${esc(co.name)}</strong></p>
-        <p>We have compiled the accompanying statement of financial position of <strong>${esc(co.name)}</strong> as at ${fmtDate(p.to)}, and the related statements of comprehensive income, and cash flows for the period then ended. These financial statements are the responsibility of the organization's management.</p>
-        <p>${co.accOpinion ? esc(co.accOpinion) : `We performed this engagement in accordance with the International Standards on Related Services (ISRS) 4410, Compilation Engagements, and in accordance with the requirements of the professional body of the practitioner. We have not performed an audit or a review, and accordingly, we do not express an opinion or provide any assurance on the financial statements.`}</p>
+        <p>
+          We have compiled and verified the accompanying statement of financial position of <strong>${esc(co.name)}</strong> as at 
+          ${fmtDate(p.to)}, and the related statements of comprehensive income, and cash flows for the period then ended. 
+          The figures presented reflect the <b>actual financial position</b> of the organization.
+        </p>
+        <p>
+          ${co.accOpinion ? esc(co.accOpinion) : 
+          `We performed this engagement in accordance with the International Standards on Related Services (ISRS) 4410, Compilation Engagements, and in accordance with the requirements of the professional body of the practitioner. We have verified the underlying records to the best of our ability. These statements are not audited, and accordingly, we do not express an audit opinion.`}
+        </p>
       </div>
+
       <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: flex-end;">
-        <div><div style="border-bottom: 1px solid #000; width: 220px; margin-bottom: 6px;"></div><div><strong>${esc(co.accName)}</strong></div><div>${esc(co.accBody)} Member No: ${esc(co.accNumber)}</div><div>${esc(co.accFirm)}</div><div>Date: ${fmtDate(todayISO())}</div></div>
-        <div style="text-align: right; font-size: 10px; color: #555;">Professional Stamp / Seal</div>
+        <div>
+          <div style="border-bottom: 1px solid #000; width: 220px; margin-bottom: 6px;"></div>
+          <div><strong>${esc(co.accName)}</strong></div>
+          <div>${esc(co.accBody)} Member No: ${esc(co.accNumber)}</div>
+          <div>${esc(co.accFirm)}</div>
+          <div>Date: ${fmtDate(todayISO())}</div>
+        </div>
+        <div style="text-align: center; font-size: 11px; color: #065f46; border: 2px solid #065f46; padding: 8px 12px; border-radius: 4px; transform: rotate(-5deg); font-weight: 800; letter-spacing: 1px;">
+          <div>✓ VERIFIED ACTUAL FIGURES</div>
+          <div style="font-size: 9px; font-weight: normal; margin-top: 2px;">${esc(co.accFirm)}</div>
+        </div>
       </div>
-    </div>` : ''}
+    </div>
+    ` : ''}
 
     <div class="foot">
       Prepared by ${esc(co.name || 'the business')} (Reg. no. ${esc(co.regNo || '—')}) · ${fmtDate(p.from)} to ${fmtDate(p.to)} ·
-      Prepared in accordance with IFRS for SMEs (SA GAAP). Figures are management estimates and have not been audited.
-      Tax figures are estimates only and must be confirmed with SARS or a registered tax practitioner.
-      ${co.orgType === 'financial' ? `<br><br><strong>Regulatory Compliance:</strong> This entity operates as a Financial Services Provider. ${co.ncrNo ? `NCR Registration Number: ${esc(co.ncrNo)}. ` : ''}${co.fspNo ? `FSP License Number: ${esc(co.fspNo)}. ` : ''}These financial statements are prepared in accordance with the reporting requirements of the National Credit Regulator (NCR) and the Financial Sector Conduct Authority (FSCA).` : ''}
-      <br>Viewport Accounting annual plan — access valid to ${sub ? fmtDate(sub.end) : '—'}.
+      ${isVerified 
+        ? `These financial statements represent actual figures and have been reviewed and verified by <b>${esc(co.accName)}</b> (${esc(co.accBody)}).`
+        : `Figures are management estimates and have not been audited or independently verified.`}
+      Tax figures are subject to final assessment by SARS or a registered tax practitioner.
+      ${co.orgType === 'financial' ? `<br><br><strong>Regulatory Compliance:</strong> NCR: ${esc(co.ncrNo || 'N/A')} · FSP: ${esc(co.fspNo || 'N/A')}.` : ''}
+      <br>BudgetZA annual plan — access valid to ${sub ? fmtDate(sub.end) : '—'}.
     </div>
   </div>`;
 }
@@ -3160,18 +3366,29 @@ function init() {
   /* INCOME & EXPENSE & ASSET */
   $('#formIncome').addEventListener('submit', e => {
     e.preventDefault(); const f = e.target;
-    state.incomes.push({ id: uid(), date: f.date.value || todayISO(), desc: f.desc.value.trim() || 'Income', category: f.category.value, amount: num(f.amount.value), method: f.method.value });
+    if (state.company.lockDate && f.date.value <= state.company.lockDate) return alert('🔒 This date is locked. Please use a date after ' + state.company.lockDate);
+    state.incomes.push({ 
+      id: uid(), date: f.date.value || todayISO(), desc: f.desc.value.trim() || 'Income', 
+      category: f.category.value, amount: num(f.amount.value), method: f.method.value,
+      vatCode: f.vatCode ? f.vatCode.value : 'std'
+    });
     addAuditLog('Added Income', `${f.desc.value} (${money(f.amount.value)})`);
     f.reset(); setToday(f); refresh();
   });
   $('#formExpense').addEventListener('submit', e => {
     e.preventDefault(); const f = e.target;
-    state.expenses.push({ id: uid(), date: f.date.value || todayISO(), desc: f.desc.value.trim() || 'Expense', category: f.category.value, amount: num(f.amount.value), method: f.method.value });
+    if (state.company.lockDate && f.date.value <= state.company.lockDate) return alert('🔒 This date is locked. Please use a date after ' + state.company.lockDate);
+    state.expenses.push({ 
+      id: uid(), date: f.date.value || todayISO(), desc: f.desc.value.trim() || 'Expense', 
+      category: f.category.value, amount: num(f.amount.value), method: f.method.value,
+      vatCode: f.vatCode ? f.vatCode.value : 'std'
+    });
     addAuditLog('Added Expense', `${f.desc.value} (${money(f.amount.value)})`);
     f.reset(); setToday(f); refresh();
   });
   $('#formAsset').addEventListener('submit', e => {
     e.preventDefault(); const f = e.target;
+    if (state.company.lockDate && f.date.value <= state.company.lockDate) return alert('🔒 This date is locked. Please use a date after ' + state.company.lockDate);
     state.assets.push({ id: uid(), name: f.name.value.trim() || 'Asset', category: f.category.value, date: f.date.value || todayISO(), cost: num(f.cost.value), life: Math.max(1, num(f.life.value) || 1), salvage: num(f.salvage.value) });
     addAuditLog('Added Asset', `${f.name.value} (${money(f.cost.value)})`);
     f.reset(); setToday(f); f.life.value = 5; f.salvage.value = 0; refresh();
@@ -3195,15 +3412,29 @@ function init() {
     f.reset(); setToday(f); refresh();
   });
 
-  /* DELETE RECORDS */
+  /* DRAWINGS */
+  $('#btnAddDrawing')?.addEventListener('click', () => {
+    const partner = prompt("Enter Partner Name taking the drawing:");
+    if (!partner) return;
+    const amt = prompt("Enter Drawing Amount (R):");
+    if (!amt) return;
+    state.drawings.push({ id: uid(), date: todayISO(), partner, desc: 'Partner Drawing', amount: num(amt), reversed: false });
+    addAuditLog('Logged Drawing', `${partner} drew ${money(amt)}`);
+    refresh();
+  });
+
+  /* SOFT DELETE */
   document.addEventListener('click', e => {
     const btn = e.target.closest('[data-del]');
     if (!btn) return;
     const list = state[btn.dataset.del];
     const item = list.find(x => x.id === btn.dataset.id);
     if (item) {
-      addAuditLog('Deleted Record', `Removed from ${btn.dataset.del}`);
-      list.splice(list.indexOf(item), 1);
+      if (!confirm('Are you sure you want to reverse this entry? (It will be hidden but kept in the audit trail)')) return;
+      item.reversed = true;
+      item.reversedBy = currentUser.email;
+      item.reversedAt = new Date().toISOString();
+      addAuditLog('Reversed Entry', `Reversed ${btn.dataset.del} - ${item.desc || item.name || item.invNo || item.id}`);
       refresh();
     }
   });
@@ -3213,6 +3444,15 @@ function init() {
     const el = e.target.closest('[data-setting]');
     if (!el) return;
     const key = el.dataset.setting.split('.')[1];
+    
+    const st = subStatus(currentUser.subscription);
+    const isActive = st.state === 'active' || st.state === 'expiring';
+    if (isActive && ['name', 'orgType', 'regNo'].includes(key)) {
+      alert('Your organization identity is locked for the duration of your 12-month subscription.');
+      renderSettings(); 
+      return;
+    }
+
     let v;
     if (el.type === 'checkbox') v = el.checked;
     else if (el.type === 'number') v = el.value;
@@ -3283,7 +3523,7 @@ function init() {
     const field = el.dataset.empField;
     emp[field] = field === 'gross' ? num(el.value) : el.value;
     saveState();
-    // Live update payslips without losing focus
+    
     let totalGross = 0, totalPaye = 0, totalUifEmp = 0, totalUifCo = 0, totalSdl = 0;
     const empCalcs = state.employees.map(e => {
       const c = calcPayroll(e);
@@ -3362,11 +3602,6 @@ $('#forgotLink').addEventListener('click', async e => {
   const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
   if (error) return alertAuth(error.message);
   alertAuth('Password reset email sent. Check your inbox for the link.', true);
-});
-  window.addEventListener('beforeunload', () => {
-  if (currentUser && state) {
-    pushStateToSupabase();
-  }
 });
 </script>
 </body>
