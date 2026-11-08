@@ -765,6 +765,7 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
         <button data-view="reports">Reports</button>
         <button data-view="tax">Tax (SARS)</button>
         <button data-view="settings">Settings</button>
+        <button data-view="profile">👤 My Profile</button>
       </nav>
     </div>
   </header>
@@ -1214,6 +1215,20 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
         <button class="btn" id="btnDemo">Reload demo data</button>
       </div>
     </section>
+        <section id="view-profile" class="view">
+      <div class="card">
+        <h3>My Profile</h3>
+        <p class="muted" style="margin-bottom:16px;">Manage your personal details and account security.</p>
+        <div class="form-grid">
+          <label>Full Name<input id="profName" placeholder="Your Name"></label>
+          <label>Email Address<input id="profEmail" disabled placeholder="you@company.co.za" style="background:#f1f5f9;"></label>
+        </div>
+        <div style="margin-top:16px; display:flex; gap:10px;">
+          <button class="btn primary" onclick="updateProfile()">Save Changes</button>
+          <button class="btn outline" onclick="sendPasswordReset()">Reset Password</button>
+        </div>
+      </div>
+    </section>
   </main>
 </div>
 
@@ -1403,7 +1418,66 @@ function subStatus(sub) {
   if (d <= 30) return { state: 'expiring', days: d };
   return { state: 'active', days: d };
 }
+/* ================= PROFILE & SECURITY ================= */
+function freezeState() {
+  if (state && !Object.isFrozen(state)) {
+    Object.freeze(state.company); 
+  }
+}
 
+function renderPaywall() {
+  const st = subStatus(currentUser.subscription);
+  if (st.state === 'expired') {
+    if (!document.getElementById('paywallOverlay')) {
+      const overlay = document.createElement('div');
+      overlay.id = 'paywallOverlay';
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(255,255,255,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;';
+      overlay.innerHTML = `
+        <div style="font-size:40px; margin-bottom:15px;">🔒</div>
+        <h2 style="margin:0 0 10px; font-size:24px;">Subscription Expired</h2>
+        <p style="color:#64748b; max-width:400px; margin-bottom:20px;">Your 12-month access has ended. Renew now for ${money0(PLAN_PRICE)} to regain access.</p>
+        <button class="btn primary lg" onclick="renewSubscription()">Renew Access</button>
+        <button class="btn ghost" onclick="logout()" style="margin-top:10px;">Log Out</button>
+      `;
+      document.body.appendChild(overlay);
+    }
+  } else {
+    const overlay = document.getElementById('paywallOverlay');
+    if (overlay) overlay.remove();
+  }
+}
+
+// Anti-tamper check (runs every 2 seconds)
+setInterval(() => {
+  if (currentUser && subStatus(currentUser.subscription).state === 'expired') {
+    const overlay = document.getElementById('paywallOverlay');
+    if (!overlay) renderPaywall(); 
+  }
+}, 2000);
+
+function renderProfile() {
+  if (!currentUser) return;
+  $('#profName').value = currentUser.profile.full_name || currentUser.name || '';
+  $('#profEmail').value = currentUser.email || '';
+}
+
+window.updateProfile = async function() {
+  const newName = $('#profName').value.trim();
+  if (newName.length < 2) return alert('Name is too short.');
+  const { error } = await supabase.from('profiles').update({ full_name: newName }).eq('id', currentUser.id);
+  if (error) return alert('Error updating profile: ' + error.message);
+  currentUser.name = newName;
+  currentUser.profile.full_name = newName;
+  updateUserChip();
+  alert('Profile updated successfully!');
+};
+
+window.sendPasswordReset = async function() {
+  if (!currentUser || !currentUser.email) return;
+  const { error } = await supabase.auth.resetPasswordForEmail(currentUser.email, { redirectTo: window.location.origin });
+  if (error) return alert('Error sending reset email: ' + error.message);
+  alert('Password reset link sent to ' + currentUser.email);
+};
 let currentUser = null;
 let state = null;
 let booted = false;
@@ -2288,6 +2362,8 @@ function render() {
   $('#topCoName').textContent = state.company.name || 'Your Organization';
   $('#topPeriod').textContent = `${fmtDate(P().from)} – ${fmtDate(P().to)}`;
   renderPlanStatus();
+  renderPaywall();  
+  freezeState();     
 
   const st = subStatus(currentUser.subscription);
   const isExpired = st.state === 'expired'; 
@@ -2321,6 +2397,7 @@ function render() {
     if (view === 'reports')   { renderReports(); renderBalanceSheet(); }
     if (view === 'tax')       renderTax();
     if (view === 'settings')  { renderSettings(); renderTeam(); renderAuditLog(); }
+    if (view === 'profile')   renderProfile(); // <--- ADD THIS LINE
   } catch (error) {
     console.error("Error rendering view:", view, error);
   }
