@@ -3217,7 +3217,79 @@ function printPayslips() {
     printWindow.print();
   };
 }
+window.printVat201 = function() {
+  document.body.classList.remove('print-payslips'); 
+  try {
+    const c = compute(), co = state.company, vatRate = num(co.vatRate) / 100, factor = co.vatInclusive ? 1 / (1 + vatRate) : 1;
+    const stdRev = state.incomes.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
+    const stdExp = state.expenses.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
+    const output = stdRev * vatRate * factor, input = stdExp * vatRate * factor, net = output - input;
+    
+    $('#print-root').innerHTML = `
+      <div class="print-doc">
+        <div class="ph">
+          <div>
+            <h1>VAT201 Summary</h1>
+            <div><strong>Vendor:</strong> ${esc(co.name)}</div>
+            <div><strong>VAT Reg No:</strong> ${esc(co.vatNo || '—')}</div>
+          </div>
+          <div class="meta">
+            <div><strong>Period:</strong> ${fmtDate(P().from)} – ${fmtDate(P().to)}</div>
+          </div>
+        </div>
+        <div class="basis">System-generated summary for SARS eFiling.</div>
+        <table>
+          <tbody>
+            <tr><td>Field 1: Standard Rate Supplies</td><td class="r">${money(stdRev)}</td></tr>
+            <tr><td>Field 4: Output Tax</td><td class="r">${money(output)}</td></tr>
+            <tr><td>Field 14: Input Tax</td><td class="r">${money(input)}</td></tr>
+            <tr><td>Field 15: Net VAT Payable / (Refundable)</td><td class="r"><strong>${money(net)}</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+    setTimeout(() => window.print(), 200);
+  } catch (err) {
+    console.error(err);
+    alert("Could not generate VAT201 print view.");
+  }
+};
 
+window.printIRP6 = function() {
+  document.body.classList.remove('print-payslips'); 
+  try {
+    const c = compute(), co = state.company;
+    const year = (P().from || todayISO()).slice(0, 4);
+    
+    $('#print-root').innerHTML = `
+      <div class="print-doc">
+        <div class="ph">
+          <div>
+            <h1>IRP6 Provisional Tax Summary</h1>
+            <div><strong>Taxpayer:</strong> ${esc(co.name)}</div>
+            <div><strong>Income Tax Ref:</strong> ${esc(co.taxId || '—')}</div>
+          </div>
+          <div class="meta">
+            <div><strong>Year of Assessment:</strong> ${year}</div>
+          </div>
+        </div>
+        <div class="basis">Estimate based on YTD performance.</div>
+        <table>
+          <tbody>
+            <tr><td>Taxable Profit (YTD)</td><td class="r">${money(c.ebit)}</td></tr>
+            <tr><td>Estimated Normal Tax (Full Year)</td><td class="r">${money(c.tax)}</td></tr>
+            <tr><td>Provisional Tax Due (Approx 50%)</td><td class="r"><strong>${money(c.tax / 2)}</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+    setTimeout(() => window.print(), 200);
+  } catch (err) {
+    console.error(err);
+    alert("Could not generate IRP6 print view.");
+  }
+};
+  
 function buildPrintDoc() {
   const c = compute(), b = computeBalanceSheet(), co = state.company, p = P(), sub = currentUser && currentUser.subscription;
   const isVerified = !!(co.accName && co.accFirm);
