@@ -3094,6 +3094,42 @@ window.clearAuditLog = function() { if (!confirm('Clear log?')) return; state.au
    10. CSV IMPORT & PRINT HELPERS
    ===================================================================== */
 let csvData = [];
+ function cleanCurrency(val) {
+  if (!val) return 0;
+  let str = String(val).trim();
+  
+  // Check if the number is in brackets (accounting negative format, e.g. (150.00))
+  let isNegative = str.includes('(') && str.includes(')');
+  
+  // Remove everything except digits, commas, dots, and minus signs
+  str = str.replace(/[^\d.,-]/g, '');
+  
+  if (!str) return 0;
+
+  const lastComma = str.lastIndexOf(',');
+  const lastDot = str.lastIndexOf('.');
+  
+  if (lastComma > lastDot) {
+    // European/South African format: 1.500,50 -> remove dots (thousands), change comma to dot
+    str = str.replace(/\./g, '');
+    str = str.replace(',', '.');
+  } else if (lastDot > lastComma) {
+    // US format: 1,500.50 -> remove commas (thousands), keep dot
+    str = str.replace(/,/g, '');
+  }
+  
+  let num = parseFloat(str);
+  if (isNaN(num)) return 0;
+  
+  // If it had a minus sign or was in brackets, force it to be negative
+  if (str.includes('-') || isNegative) {
+    num = -Math.abs(num);
+  }
+  
+  return num;
+}
+
+window.handleCsvUpload = function(event) { 
 window.handleCsvUpload = function(event) {
   const file = event.target.files[0];
   if (!file) return;
