@@ -3095,6 +3095,26 @@ window.clearAuditLog = function() { if (!confirm('Clear log?')) return; state.au
    10. CSV IMPORT & PRINT HELPERS
    ===================================================================== */
 let csvData = [];
+  window.parseBankDate = function(dateStr) {
+  if (!dateStr) return null;
+  dateStr = String(dateStr).trim();
+  
+  // Handle YYYY-MM-DD or YYYY/MM/DD (Standard format)
+  if (/^\d{4}[-/]\d{2}[-/]\d{2}$/.test(dateStr)) {
+    return new Date(dateStr.replace(/\//g, '-'));
+  }
+  
+  // Handle DD/MM/YYYY or DD-MM-YYYY (SA/UK format)
+  const parts = dateStr.split(/[-/ ]/);
+  if (parts.length === 3) {
+    if (parts[2].length === 4) return new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
+    if (parts[0].length === 4) return new Date(parts[0], parseInt(parts[1]) - 1, parts[2]);
+  }
+  
+  // Fallback for standard JS date strings with time (e.g., "2026-10-15 11:09")
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? null : d;
+};
 function cleanCurrency(val) {
   if (!val) return 0;
   let str = String(val).trim();
