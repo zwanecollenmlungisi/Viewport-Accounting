@@ -1187,6 +1187,7 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
         <h3>Balance sheet setup <span class="muted">(snapshots at period end)</span></h3>
         <div class="form-grid">
           <label>Opening cash at tracking start (R)<input type="number" data-setting="company.openingCash" step="0.01" min="0"></label>
+          <label>Closing Bank Statement Balance (R)<input type="number" data-setting="company.bankBalance" step="0.01" min="0" placeholder="0.00"></label>
           <label>Opening retained earnings (R)<input type="number" data-setting="company.openingRetainedEarnings" step="0.01" min="0"></label>
           <label>Inventory on hand (R)<input type="number" data-setting="company.inventory" step="0.01" min="0"></label>
           <label>Trade receivables (R)<input type="number" data-setting="company.tradeReceivables" step="0.01" min="0"></label>
@@ -1610,7 +1611,7 @@ function profileToCompany(p) {
     accName: p.acc_name || '', accFirm: p.acc_firm || '', accBody: p.acc_body || 'SAIPA',
     accNumber: p.acc_number || '', accReportType: p.acc_report_type || 'Compilation Report',
     accOpinion: p.acc_opinion || '', lockDate: p.lock_date || '',
-    openingCash: num(p.opening_cash), openingRetainedEarnings: num(p.opening_retained_earnings),
+    openingCash: num(p.opening_cash), bankBalance: num(p.bank_balance), openingRetainedEarnings: num(p.opening_retained_earnings),
     inventory: num(p.inventory), tradeReceivables: num(p.trade_receivables), tradePayables: num(p.trade_payables),
     longTermLoans: num(p.long_term_loans), otherNonCurrentAssets: num(p.other_non_current_assets),
     deferredTax: num(p.deferred_tax)
@@ -1908,7 +1909,9 @@ async function pushProfileToSupabase() {
     acc_name: co.accName, acc_firm: co.accFirm, acc_body: co.accBody,
     acc_number: co.accNumber, acc_report_type: co.accReportType, acc_opinion: co.accOpinion,
     lock_date: co.lockDate || null,
-    opening_cash: num(co.openingCash), opening_retained_earnings: num(co.openingRetainedEarnings),
+    opening_cash: num(co.openingCash), 
+    bank_balance: num(co.bankBalance),
+    opening_retained_earnings: num(co.openingRetainedEarnings),
     inventory: num(co.inventory), trade_receivables: num(co.tradeReceivables),
     trade_payables: num(co.tradePayables), long_term_loans: num(co.longTermLoans),
     other_non_current_assets: num(co.otherNonCurrentAssets), deferred_tax: num(co.deferredTax)
@@ -1969,7 +1972,9 @@ function emptyState() {
       vatEnabled: false, vatInclusive: false, sbcEnabled: true, orgType: 'company',
       ncrNo: '', fspNo: '', accName: '', accFirm: '', accBody: 'SAIPA', accNumber: '', accReportType: 'Compilation Report', accOpinion: '',
       lockDate: '', 
-      openingCash: 0, openingRetainedEarnings: 0, inventory: 0, tradeReceivables: 0, tradePayables: 0, longTermLoans: 0, otherNonCurrentAssets: 0, deferredTax: 0
+      openingCash: 0, bankBalance: 0, openingRetainedEarnings: 0, inventory: 0, 
+      tradeReceivables: 0, tradePayables: 0, longTermLoans: 0, 
+      otherNonCurrentAssets: 0, deferredTax: 0
     },
     incomes: [], 
     expenses: [], 
