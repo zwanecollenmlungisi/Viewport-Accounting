@@ -1124,6 +1124,9 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
       <div class="card">
         <h3>Statement of cash flows</h3>
         <div id="stmtCash"></div>
+        <div class="card">
+        <h3>Bank Reconciliation Statement</h3>
+        <div id="stmtReconciliation"></div>
       </div>
     </section>
 
@@ -2445,7 +2448,7 @@ function render() {
     if (view === 'assets')    renderAssets();
     if (view === 'import')    { /* handled inline */ }
     if (view === 'registers') renderRegisters();
-    if (view === 'reports')   { renderReports(); renderBalanceSheet(); }
+    if (view === 'reports')   { renderReports(); renderBalanceSheet(); renderReconciliationView(); }
     if (view === 'tax')       renderTax();
     if (view === 'settings')  { renderSettings(); renderTeam(); renderAuditLog(); }
     if (view === 'profile')   renderProfile(); // <--- ADD THIS LINE
@@ -2908,6 +2911,9 @@ function renderReports() {
   $('#stmtIncome').innerHTML = verifyBadge + stmtHTML(incomeStatementRows(c));
   $('#stmtCash').innerHTML = stmtHTML(cashFlowRows(c));
 }
+  function renderReconciliationView() {
+  $('#stmtReconciliation').innerHTML = renderReconciliation();
+}
 function renderBalanceSheet() {
   const b = computeBalanceSheet(), isBalanced = Math.abs(b.difference) < 0.01;
   const isVerified = !!(state.company.accName && state.company.accFirm);
@@ -2923,7 +2929,103 @@ function renderBalanceSheet() {
       ${!isBalanced ? `<p class="bs-check-note">Difference indicates items not captured. Check opening capital, retained earnings, loans, receivables, or prior VAT/tax. Update in Settings to reconcile.</p>` : ''}
     </div>`;
 }
+  
+${renderReconciliation()}
+function renderReconciliation() {
+  const c = compute();
+  const bs = computeBalanceSheet();
+  const co = state.company;
+  
+  // 1. Get the two balances
+  const bankBalance = num(co.bankBalance);
+  const systemCash = bs.cash;
+  
+  // 2. Get outstanding items (deposits in transit and unpresented cheques)
+  const outstandingDeposits = (state.invoices || []).filter(i => i.status === 'Unpaid').reduce((a, b) => a + num(b.amount), 0);
+  const outstandingCheques = (state.bills || []).filter(b => b.status === 'Unpaid').reduce((a, b) => a + num(b.amount), 0);
+  
+  // 3. Calculate Adjusted Balances
+  const adjustedBank = bankBalance + outstandingDeposits - outstandingCheques;
+  const adjustedSystem = systemCash + outstandingDeposits - outstandingCheques;
+  const difference = adjustedBank - adjustedSystem;
 
+  return `
+    <div class="section" style="break-before: page;">
+      <h2>Bank Reconciliation Statement</h2>
+      <p style="font-size: 11px; color: #555; margin-bottom: 12px;">As at ${fmtDate(P().to)}</p>
+      
+      <table style="width: 100%; max-width: 600px; border-collapse: collapse; font-size: 12px;">
+        <tbody>
+          <tr>
+            <td style="padding: 8px 0; font-weight: 700; border-bottom: 1px solid #000;" colspan="2">Balance per Bank Statement (per Settings)</td>
+            <td style="text-align: right; padding: 8px 0; font-weight: 700; border-bottom: 1px solid #000;">${money(bankBalance)}</td>
+          </tr>
+          
+          <tr><td colspan="3" style="padding-top: 12px; font-weight: 700; color: #444;">Add: Outstanding Deposits (Debtors)</td></tr>
+          <tr>
+            <td style="padding: 4px 0 4px 16px; color: #555;">Total Unpaid Invoices</td>
+            <td></td>
+            <td style="text-align: right; padding: 4px 0;">${money(outstandingDeposits)}</td>
+          </tr>
+          
+          <tr><td colspan="3" style="padding-top: 12px; font-weight: 700; color: #444;">Less: Outstanding Cheques (Creditors)</td></tr>
+          <tr>
+            <td style="padding: 4px 0 4px 16px; color: #555;">Total Unpaid Bills</td>
+            <td></td>
+            <td style="text-align: right; padding: 4px 0;">(${money(outstandingCheques)})</td>
+          </tr>
+          
+          <tr>
+            <td style="padding: 12px 0; font-weight: 700; border-top: 2px solid #000; border-bottom: 1px solid #000;" colspan="2">Adjusted Bank Balance</td>
+            <td style="text-align: right; padding: 12px 0; font-weight: 700; border-top: 2px solid #000; border-bottom: 1px solid #000;">${money(adjustedBank)}</td>
+          </tr>
+
+          <tr><td colspan="3" style="height: 30px;"></td></tr>
+
+          <tr>
+            <td style="padding: 8px 0; font-weight: 700; border-bottom: 1px solid #000;" colspan="2">Balance per System (Cash on Hand)</td>
+            <td style="text-align: right; padding: 8px 0; font-weight: 700; border-bottom: 1px solid #000;">${money(systemCash)}</td>
+          </tr>
+          
+          <tr><td colspan="3" style="padding-top: 12px; font-weight: 700; color: #444;">Add: Outstanding Deposits</td></tr>
+          <tr>
+            <td style="padding: 4px 0 4px 16px; color: #555;">Deposits in transit</td>
+            <td></td>
+            <td style="text-align: right; padding: 4px 0;">${money(outstandingDeposits)}</td>
+          </tr>
+          
+          <tr><td colspan="3" style="padding-top: 12px; font-weight: 700; color: #444;">Less: Outstanding Cheques</td></tr>
+          <tr>
+            <td style="padding: 4px 0 4px 16px; color: #555;">Cheques not yet presented</td>
+            <td></td>
+            <td style="text-align: right; padding: 4px 0;">(${money(outstandingCheques)})</td>
+          </tr>
+          
+          <tr>
+            <td style="padding: 12px 0; font-weight: 800; border-top: 2px solid #000; border-bottom: 2px solid #000;" colspan="2">Adjusted System Balance</td>
+            <td style="text-align: right; padding: 12px 0; font-weight: 800; border-top: 2px solid #000; border-bottom: 2px solid #000;">${money(adjustedSystem)}</td>
+          </tr>
+          
+          ${Math.abs(difference) > 1 ? `
+          <tr>
+            <td colspan="3" style="padding-top: 20px; color: #991b1b; font-weight: 700; font-size: 11px;">
+              ⚠️ Reconciliation Difference: ${money(difference)}<br>
+              <span style="font-weight: normal; color: #555;">Please check for unrecorded bank charges, interest, or unlogged transactions.</span>
+            </td>
+          </tr>
+          ` : `
+          <tr>
+            <td colspan="3" style="padding-top: 20px; color: #065f46; font-weight: 700; font-size: 11px;">
+              ✓ Reconciled Successfully
+            </td>
+          </tr>
+          `}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+  
 function renderTrialBalance() {
   const c = compute();
   const bs = computeBalanceSheet();
