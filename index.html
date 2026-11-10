@@ -2929,7 +2929,6 @@ function renderBalanceSheet() {
       ${!isBalanced ? `<p class="bs-check-note">Difference indicates items not captured. Check opening capital, retained earnings, loans, receivables, or prior VAT/tax. Update in Settings to reconcile.</p>` : ''}
     </div>`;
 }
-  
 ${renderReconciliation()}
 function renderReconciliation() {
   const c = compute();
