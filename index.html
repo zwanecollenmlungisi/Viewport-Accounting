@@ -417,7 +417,6 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
   body.print-payslips #payslipsContainer div[style*="font-size:13px"] { font-size: 11pt !important; }
   body.print-payslips #payslipsContainer div[style*="font-size:10.5px"] { font-size: 9pt !important; }
 }
-}
 </style>
 </head>
 <body>
@@ -3098,35 +3097,97 @@ let csvData = [];
 window.handleCsvUpload = function(event) {
   const file = event.target.files[0];
   if (!file) return;
-  Papa.parse(file, { header: true, skipEmptyLines: true, complete: function(results) {
-    if (results.data.length === 0) return alert('CSV is empty.');
-    csvData = results.data;
-    const headers = results.meta.fields;
-    const dateSel = $('#mapDate'), descSel = $('#mapDesc'), amtSel = $('#mapAmount');
-    const opts = headers.map(h => `<option value="${esc(h)}">${esc(h)}</option>`).join('');
-    dateSel.innerHTML = opts; descSel.innerHTML = opts; amtSel.innerHTML = opts;
-    headers.forEach(h => {
-      const l = h.toLowerCase();
-      if (l.includes('date')) dateSel.value = h;
-      if (l.includes('desc') || l.includes('narrative') || l.includes('detail') || l.includes('reference')) descSel.value = h;
-      if (l.includes('amount') || l.includes('value')) amtSel.value = h;
-    });
-    $('#uploadStep').classList.add('hidden');
-    $('#mappingCard').classList.remove('hidden');
-    updateImportPreview();
-    ['#mapDate', '#mapDesc', '#mapAmount', '#mapType'].forEach(sel => { $(sel).onchange = updateImportPreview; });
-  }});
-};
+  
+  Papa.parse(file, { 
+    header: true, 
+    skipEmptyLines: true, 
+    complete: function(results) {
+      if (results.data.length === 0) return alert('CSV is empty.');
+      csvData = results.data;
+      
+      const headers = results.meta.fields;
+      const dateSel = $('#mapDate');
+      const descSel = $('#mapDesc');
+      const amtSel = $('#mapAmount');
+      const amtSel2 = $('#mapAmount2');
+      
+      const opts = headers.map(h => `<option value="${esc(h)}">${esc(h)}</option>`).join('');
+      
+      dateSel.innerHTML = opts;
+      descSel.innerHTML = opts;
+      amtSel.innerHTML = opts;
+      
+      // THIS IS THE NEW LINE FOR THE SECOND COLUMN
+      if (amtSel2) {
+        amtSel2.innerHTML = `<option value="">-- None --</option>` + opts;
+      }
+      
+      headers.forEach(h => {
+        const l = h.toLowerCase();
+        
+        if (l.includes('date')) {
+          dateSel.value = h;
+        }
+        if (l.includes('desc') || l.includes('narrative') || l.includes('detail') || l.includes('reference')) {
+          descSel.value = h;
+        }
+        
+        // THIS AUTOMATICALLY DETECTS MONEY IN / MONEY OUT
+        if (l.includes('money in') || l.includes('amount') || l.includes('credit')) {
+          amtSel.value = h;
+        }
+        if (l.includes('money out') || l.includes('debit')) {
+          if (amtSel2) amtSel2.value = h;
+        }
+      });
+      
+      $('#uploadStep').classList.add('hidden');
+      $('#mappingCard').classList.remove('hidden');
+      updateImportPreview();
+      
+      ['#mapDate', '#mapDesc', '#mapAmount', '#mapAmount2', '#mapType'].forEach(sel => {
+        const el = $(sel);
+        if (el) el.onchange = updateImportPreview;
+      });
+    }
+  });
+}; 
 window.updateImportPreview = function() {
-  const dateCol = $('#mapDate').value, descCol = $('#mapDesc').value, amtCol = $('#mapAmount').value, typeMode = $('#mapType').value;
+  const dateCol = $('#mapDate').value;
+  const descCol = $('#mapDesc').value;
+  const amt1Col = $('#mapAmount').value;
+  const amt2Col = $('#mapAmount2') ? $('#mapAmount2').value : '';
+  const typeMode = $('#mapType').value;
+
   $('#previewHead').innerHTML = `<tr><th>Date</th><th>Description</th><th class="r">Amount</th><th>Type</th></tr>`;
+  
   const rows = csvData.slice(0, 10).map(row => {
     const d = parseBankDate(row[dateCol]);
-    const desc = row[descCol];
-    const amt = parseFloat(String(row[amtCol]).replace(/[^0-9.-]+/g, ''));
-    let type = typeMode === 'expense' ? 'Expense' : typeMode === 'income' ? 'Income' : (!isNaN(amt) && amt < 0 ? 'Expense' : 'Income');
-    return `<tr><td>${d ? iso(d) : 'Invalid'}</td><td>${esc(desc)}</td><td class="r">${money(Math.abs(amt))}</td><td><span class="pill" style="background:${type === 'Income' ? '#ecfdf5' : '#fef2f2'};color:${type === 'Income' ? '#065f46' : '#991b1b'}">${type}</span></td></tr>`;
+    const desc = row[descCol] || '';
+    
+    let amt1 = cleanCurrency(row[amt1Col]);
+    let amt2 = amt2Col ? cleanCurrency(row[amt2Col]) : 0;
+    
+    let finalAmt = 0;
+    let type = 'Income';
+
+    if (typeMode === 'auto') {
+      if (amt1 > 0) { finalAmt = amt1; type = 'Income'; }
+      else if (amt2 !== 0) { finalAmt = Math.abs(amt2); type = 'Expense'; }
+      else if (amt1 < 0) { finalAmt = Math.abs(amt1); type = 'Expense'; }
+    } else {
+      finalAmt = Math.abs(amt1 !== 0 ? amt1 : amt2);
+      type = typeMode === 'expense' ? 'Expense' : 'Income';
+    }
+
+    return `<tr>
+      <td>${d ? iso(d) : 'Invalid'}</td>
+      <td>${esc(desc)}</td>
+      <td class="r">${money(finalAmt)}</td>
+      <td><span class="pill" style="background:${type === 'Income' ? '#ecfdf5' : '#fef2f2'};color:${type === 'Income' ? '#065f46' : '#991b1b'}">${type}</span></td>
+    </tr>`;
   });
+  
   $('#previewBody').innerHTML = rows.join('') + `<tr><td colspan="4" class="muted" style="text-align:center">... showing first 10 rows</td></tr>`;
 };
 window.parseBankDate = function(dateStr) {
@@ -3142,18 +3203,60 @@ window.parseBankDate = function(dateStr) {
   return isNaN(d.getTime()) ? null : d;
 };
 window.processImport = function() {
-  const dateCol = $('#mapDate').value, descCol = $('#mapDesc').value, amtCol = $('#mapAmount').value, typeMode = $('#mapType').value;
+  const dateCol = $('#mapDate').value;
+  const descCol = $('#mapDesc').value;
+  const amt1Col = $('#mapAmount').value;
+  const amt2Col = $('#mapAmount2') ? $('#mapAmount2').value : '';
+  const typeMode = $('#mapType').value;
+  
   let inc = 0, exp = 0;
+  
   csvData.forEach(row => {
     const d = parseBankDate(row[dateCol]);
     if (!d) return;
-    const amt = parseFloat(String(row[amtCol]).replace(/[^0-9.-]+/g, ''));
-    if (isNaN(amt) || amt === 0) return;
-    const isExp = typeMode === 'expense' || (typeMode === 'auto' && amt < 0);
-    const newTx = { id: uid(), date: iso(d), desc: row[descCol] || 'Bank Transaction', category: isExp ? 'Other' : 'Sales', amount: Math.abs(amt), method: 'EFT', vatCode: 'std' };
-    if (isExp) { state.expenses.push(newTx); exp++; } else { state.incomes.push(newTx); inc++; }
+    
+    let amt1 = cleanCurrency(row[amt1Col]);
+    let amt2 = amt2Col ? cleanCurrency(row[amt2Col]) : 0;
+    
+    let finalAmt = 0;
+    let isExp = false;
+
+    if (typeMode === 'auto') {
+      if (amt1 > 0) { finalAmt = amt1; isExp = false; }
+      else if (amt2 !== 0) { finalAmt = Math.abs(amt2); isExp = true; }
+      else if (amt1 < 0) { finalAmt = Math.abs(amt1); isExp = true; }
+    } else {
+      finalAmt = Math.abs(amt1 !== 0 ? amt1 : amt2);
+      isExp = (typeMode === 'expense');
+    }
+
+    if (finalAmt === 0) return;
+
+    const newTx = { 
+      id: uid(), 
+      date: iso(d), 
+      desc: row[descCol] || 'Bank Transaction', 
+      category: isExp ? 'Other' : 'Sales', 
+      amount: finalAmt, 
+      method: 'EFT', 
+      vatCode: 'std' 
+    };
+
+    if (isExp) { 
+      if (row['Fee'] && cleanCurrency(row['Fee']) !== 0 && amt2 === 0) {
+        newTx.category = 'Bank Charges';
+        newTx.desc = 'Bank Fee: ' + newTx.desc;
+      }
+      state.expenses.push(newTx); 
+      exp++; 
+    } else { 
+      state.incomes.push(newTx); 
+      inc++; 
+    }
   });
-  if (inc === 0 && exp === 0) return alert('No valid transactions.');
+
+  if (inc === 0 && exp === 0) return alert('No valid transactions found.');
+  
   addAuditLog('Imported CSV', `Added ${inc} incomes and ${exp} expenses.`);
   refresh();
   alert(`Import Complete!\nAdded ${inc} incomes and ${exp} expenses.`);
