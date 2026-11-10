@@ -3095,42 +3095,30 @@ window.clearAuditLog = function() { if (!confirm('Clear log?')) return; state.au
    10. CSV IMPORT & PRINT HELPERS
    ===================================================================== */
 let csvData = [];
- function cleanCurrency(val) {
+function cleanCurrency(val) {
   if (!val) return 0;
   let str = String(val).trim();
-  
-  // Check if the number is in brackets (accounting negative format, e.g. (150.00))
   let isNegative = str.includes('(') && str.includes(')');
-  
-  // Remove everything except digits, commas, dots, and minus signs
   str = str.replace(/[^\d.,-]/g, '');
-  
   if (!str) return 0;
-
   const lastComma = str.lastIndexOf(',');
   const lastDot = str.lastIndexOf('.');
   
   if (lastComma > lastDot) {
-    // European/South African format: 1.500,50 -> remove dots (thousands), change comma to dot
     str = str.replace(/\./g, '');
     str = str.replace(',', '.');
   } else if (lastDot > lastComma) {
-    // US format: 1,500.50 -> remove commas (thousands), keep dot
     str = str.replace(/,/g, '');
   }
   
   let num = parseFloat(str);
   if (isNaN(num)) return 0;
-  
-  // If it had a minus sign or was in brackets, force it to be negative
-  if (str.includes('-') || isNegative) {
-    num = -Math.abs(num);
-  }
-  
+  if (str.includes('-') || isNegative) num = -Math.abs(num);
   return num;
 }
 
-window.handleCsvUpload = function(event) { 
+let csvData = [];
+
 window.handleCsvUpload = function(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -3153,29 +3141,14 @@ window.handleCsvUpload = function(event) {
       dateSel.innerHTML = opts;
       descSel.innerHTML = opts;
       amtSel.innerHTML = opts;
-      
-      // THIS IS THE NEW LINE FOR THE SECOND COLUMN
-      if (amtSel2) {
-        amtSel2.innerHTML = `<option value="">-- None --</option>` + opts;
-      }
+      if (amtSel2) amtSel2.innerHTML = `<option value="">-- None --</option>` + opts;
       
       headers.forEach(h => {
         const l = h.toLowerCase();
-        
-        if (l.includes('date')) {
-          dateSel.value = h;
-        }
-        if (l.includes('desc') || l.includes('narrative') || l.includes('detail') || l.includes('reference')) {
-          descSel.value = h;
-        }
-        
-        // THIS AUTOMATICALLY DETECTS MONEY IN / MONEY OUT
-        if (l.includes('money in') || l.includes('amount') || l.includes('credit')) {
-          amtSel.value = h;
-        }
-        if (l.includes('money out') || l.includes('debit')) {
-          if (amtSel2) amtSel2.value = h;
-        }
+        if (l.includes('date')) dateSel.value = h;
+        if (l.includes('desc') || l.includes('narrative') || l.includes('detail') || l.includes('reference')) descSel.value = h;
+        if (l.includes('money in') || l.includes('amount') || l.includes('credit')) amtSel.value = h;
+        if (l.includes('money out') || l.includes('debit')) { if (amtSel2) amtSel2.value = h; }
       });
       
       $('#uploadStep').classList.add('hidden');
@@ -3188,7 +3161,8 @@ window.handleCsvUpload = function(event) {
       });
     }
   });
-}; 
+};
+
 window.updateImportPreview = function() {
   const dateCol = $('#mapDate').value;
   const descCol = $('#mapDesc').value;
@@ -3227,18 +3201,7 @@ window.updateImportPreview = function() {
   
   $('#previewBody').innerHTML = rows.join('') + `<tr><td colspan="4" class="muted" style="text-align:center">... showing first 10 rows</td></tr>`;
 };
-window.parseBankDate = function(dateStr) {
-  if (!dateStr) return null;
-  dateStr = String(dateStr).trim();
-  if (/^\d{4}[-/]\d{2}[-/]\d{2}$/.test(dateStr)) return new Date(dateStr.replace(/\//g, '-'));
-  const parts = dateStr.split(/[-/ ]/);
-  if (parts.length === 3) {
-    if (parts[2].length === 4) return new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
-    if (parts[0].length === 4) return new Date(parts[0], parseInt(parts[1]) - 1, parts[2]);
-  }
-  const d = new Date(dateStr);
-  return isNaN(d.getTime()) ? null : d;
-};
+
 window.processImport = function() {
   const dateCol = $('#mapDate').value;
   const descCol = $('#mapDesc').value;
@@ -3298,6 +3261,14 @@ window.processImport = function() {
   refresh();
   alert(`Import Complete!\nAdded ${inc} incomes and ${exp} expenses.`);
   cancelImport();
+};
+
+window.cancelImport = function() {
+  csvData = [];
+  const fileInput = $('#csvFileInput');
+  if (fileInput) fileInput.value = '';
+  $('#mappingCard').classList.add('hidden');
+  $('#uploadStep').classList.remove('hidden');
 };
 window.cancelImport = function() {
   csvData = [];
