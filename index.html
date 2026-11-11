@@ -3580,22 +3580,19 @@ function buildPrintDoc() {
   const isVerified = !!(co.accName && co.accFirm);
   const isNonProfit = ['npo', 'school', 'trust'].includes(co.orgType);
 
+  let basisText = isVerified 
+    ? `<strong>Basis of Preparation & Verification:</strong> These financial statements have been prepared in accordance with IFRS for SMEs (SA GAAP). The figures presented herein represent <b>actual financial data</b> for the period and have been formally verified by <b>${esc(co.accName)}</b> (${esc(co.accBody)}) of <b>${esc(co.accFirm)}</b>.`
+    : `<strong>Basis of preparation:</strong> These management accounts are prepared in accordance with IFRS for SMEs (SA GAAP). <b>Note: These are management estimates and have not been independently audited or verified.</b>`;
+
+  let footText = isVerified 
+    ? `These financial statements represent actual figures and have been reviewed and verified by <b>${esc(co.accName)}</b> (${esc(co.accBody)}).`
+    : `Figures are management estimates and have not been audited or independently verified.`;
+
   const assetRows = state.assets.filter(a => !a.sold).slice().sort((a, b) => a.date.localeCompare(b.date)).map(a => {
     const v = assetValuation(a);
     return `<tr><td>${esc(a.name)}</td><td>${esc(a.category)}</td><td>${fmtDate(a.date)}</td><td class="r">${money(a.cost)}</td><td class="r">${num(a.life)} yr</td><td class="r">${money(v.accum)}</td><td class="r">${money(v.nbv)}</td></tr>`;
   }).join('');
   
-  const months = monthsInPeriod(p), idx = new Map(months.map((m, i) => [m.key, i]));
-  const series = months.map(m => ({ label: m.label, income: 0, expense: 0 }));
-  state.incomes.filter(t => inP(t.date) && !t.reversed).forEach(t => { const i = idx.get(t.date.slice(0,7)); if (i != null) series[i].income += num(t.amount); });
-  state.expenses.filter(t => inP(t.date) && !t.reversed).forEach(t => { const i = idx.get(t.date.slice(0,7)); if (i != null) series[i].expense += num(t.amount); });
-  
-  const vatRate = num(co.vatRate) / 100, factor = co.vatInclusive ? 1 / (1 + vatRate) : 1;
-  const stdRev = state.incomes.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
-  const stdExp = state.expenses.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
-  const vatCollected = co.vatEnabled ? stdRev * vatRate * factor : 0;
-  const vatPaid = co.vatEnabled ? stdExp * vatRate * factor : 0;
-
   const days = dailyRows();
   const dayRows = days.slice(0, 60).map(r => `<tr><td>${fmtDate(r.date)}</td><td class="r">${r.count || '—'}</td><td class="r">${money(r.income)}</td><td class="r">${money(r.expense)}</td><td class="r">${money(r.income - r.expense)}</td></tr>`).join('');
   const dayTotals = days.reduce((a, r) => { a.count += r.count; a.income += r.income; a.expense += r.expense; return a; }, { count: 0, income: 0, expense: 0 });
@@ -3608,6 +3605,12 @@ function buildPrintDoc() {
   const empCalcs = (state.employees || []).map(e => { const pc = calcPayroll(e); return { ...e, ...pc }; });
   let totalGross = 0, totalPaye = 0, totalUifEmp = 0, totalUifCo = 0, totalSdl = 0;
   empCalcs.forEach(e => { totalGross += e.gross; totalPaye += e.paye; totalUifEmp += e.uif; totalUifCo += e.uif; totalSdl += e.sdl; });
+
+  const vatRate = num(co.vatRate) / 100, factor = co.vatInclusive ? 1 / (1 + vatRate) : 1;
+  const stdRev = state.incomes.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
+  const stdExp = state.expenses.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
+  const vatCollected = co.vatEnabled ? stdRev * vatRate * factor : 0;
+  const vatPaid = co.vatEnabled ? stdExp * vatRate * factor : 0;
 
   const plainStmt = rows => `<table><tbody>${rows.map(r => {
     if (r.section) return `<tr><td colspan="2" style="padding-top:12px;font-weight:700;font-size:10px;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #000">${esc(r.label)}</td></tr>`;
@@ -3656,16 +3659,7 @@ function buildPrintDoc() {
     </div>
 
     <div class="basis">
-      ${isVerified ? `
-        <strong>Basis of Preparation & Verification:</strong> These financial statements have been prepared in accordance with IFRS for SMEs (SA GAAP), 
-        the Companies Act 71 of 2008, the Value-Added Tax Act 89 of 1991 and the Income Tax Act 58 of 1962. 
-        The figures presented herein represent <b>actual financial data</b> for the period and have been formally verified by 
-        <b>${esc(co.accName)}</b> (${esc(co.accBody)}) of <b>${esc(co.accFirm)}</b>.
-      ` : `
-        <strong>Basis of preparation:</strong> These management accounts are prepared in accordance with IFRS for SMEs (SA GAAP),
-        the Companies Act 71 of 2008, the Value-Added Tax Act 89 of 1991 and the Income Tax Act 58 of 1962.
-        Amounts are in South African Rand. <b>Note: These are management estimates and have not been independently audited or verified.</b>
-      `}
+      ${basisText}
       <br><br>
       <span style="font-size: 9px; color: #666;">
         <b>Entity Lock:</b> The organization identity (Name: ${esc(co.name)}, Reg: ${esc(co.regNo)}) is locked for this 12-month subscription period in accordance with platform licensing rules.
@@ -3829,16 +3823,13 @@ function buildPrintDoc() {
 
     <div class="foot">
       Prepared by ${esc(co.name || 'the business')} (Reg. no. ${esc(co.regNo || '—')}) · ${fmtDate(p.from)} to ${fmtDate(p.to)} ·
-      ${isVerified 
-        ? `These financial statements represent actual figures and have been reviewed and verified by <b>${esc(co.accName)}</b> (${esc(co.accBody)}).`
-        : `Figures are management estimates and have not been audited or independently verified.`}
+      ${footText}
       Tax figures are subject to final assessment by SARS or a registered tax practitioner.
       ${co.orgType === 'financial' ? `<br><br><strong>Regulatory Compliance:</strong> NCR: ${esc(co.ncrNo || 'N/A')} · FSP: ${esc(co.fspNo || 'N/A')}.` : ''}
       <br>Viewport Accounting Tool annual plan — access valid to ${sub ? fmtDate(sub.end) : '—'}.
     </div>
   </div>`;
 }
-
 function doPrint() {
   if (!state) return;
   $('#print-root').innerHTML = buildPrintDoc();
