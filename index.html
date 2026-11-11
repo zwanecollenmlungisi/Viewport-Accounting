@@ -2321,12 +2321,17 @@ function lineChartSVG(points) {
   if (pts.length > 1) {
     s += `<path d="M${pts.join(' L')} L${X(points.length - 1)},${T + ih} L${X(0)},${T + ih} Z" fill="rgba(0,122,77,.10)"/><polyline points="${pts.join(' ')}" fill="none" stroke="#007a4d" stroke-width="2.5" stroke-linejoin="round"/>`;
   }
+  // Calculate how many labels to skip to prevent overlap
+  const labelStep = Math.max(1, Math.ceil(points.length / 6));
+
   points.forEach((p, i) => {
-    s += `<circle cx="${X(i)}" cy="${Y(p.value)}" r="3.5" fill="#007a4d"><title>${esc(p.label)}: ${esc(money(p.value))}</title></circle><text class="axis" x="${X(i)}" y="${H - B + 20}" text-anchor="middle">${esc(p.label)}</text>`;
+    s += `<circle cx="${X(i)}" cy="${Y(p.value)}" r="3.5" fill="#007a4d"><title>${esc(p.label)}: ${esc(money(p.value))}</title></circle>`;
+    
+    // Only draw the text if it's the first, last, or falls on the step
+    if (i === 0 || i === points.length - 1 || i % labelStep === 0) {
+      s += `<text class="axis" x="${X(i)}" y="${H - B + 20}" text-anchor="middle">${esc(p.label)}</text>`;
+    }
   });
-  s += `</svg>`;
-  return s;
-}
 
 /* =====================================================================
    8. STATEMENTS
