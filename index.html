@@ -3577,259 +3577,36 @@ window.printIRP6 = function() {
 };
   
 function buildPrintDoc() {
-  const c = compute(), b = computeBalanceSheet(), co = state.company, p = P(), sub = currentUser && currentUser.subscription;
-  const isVerified = !!(co.accName && co.accFirm);
-  const isNonProfit = ['npo', 'school', 'trust'].includes(co.orgType);
-
-  let basisText = isVerified 
-    ? `<strong>Basis of Preparation & Verification:</strong> These financial statements have been prepared in accordance with IFRS for SMEs (SA GAAP). The figures presented herein represent <b>actual financial data</b> for the period and have been formally verified by <b>${esc(co.accName)}</b> (${esc(co.accBody)}) of <b>${esc(co.accFirm)}</b>.`
-    : `<strong>Basis of preparation:</strong> These management accounts are prepared in accordance with IFRS for SMEs (SA GAAP). <b>Note: These are management estimates and have not been independently audited or verified.</b>`;
-
-  let footText = isVerified 
-    ? `These financial statements represent actual figures and have been reviewed and verified by <b>${esc(co.accName)}</b> (${esc(co.accBody)}).`
-    : `Figures are management estimates and have not been audited or independently verified.`;
-
-  const assetRows = state.assets.filter(a => !a.sold).slice().sort((a, b) => a.date.localeCompare(b.date)).map(a => {
-    const v = assetValuation(a);
-    return `<tr><td>${esc(a.name)}</td><td>${esc(a.category)}</td><td>${fmtDate(a.date)}</td><td class="r">${money(a.cost)}</td><td class="r">${num(a.life)} yr</td><td class="r">${money(v.accum)}</td><td class="r">${money(v.nbv)}</td></tr>`;
-  }).join('');
-  
-  const days = dailyRows();
-  const dayRows = days.slice(0, 60).map(r => `<tr><td>${fmtDate(r.date)}</td><td class="r">${r.count || '—'}</td><td class="r">${money(r.income)}</td><td class="r">${money(r.expense)}</td><td class="r">${money(r.income - r.expense)}</td></tr>`).join('');
-  const dayTotals = days.reduce((a, r) => { a.count += r.count; a.income += r.income; a.expense += r.expense; return a; }, { count: 0, income: 0, expense: 0 });
-  
-  const monthBuckets = buildBuckets('monthly').slice(-12);
-  const monthRows = monthBuckets.map(mb => `<tr><td>${esc(mb.range)}</td><td class="r">${mb.count || '—'}</td><td class="r">${money(mb.income)}</td><td class="r">${money(mb.expense)}</td><td class="r">${money(mb.net)}</td><td class="r">${money(mb.cum)}</td></tr>`).join('');
-  
-  const partners = state.partners || [], suppliers = state.suppliers || [], ownership = partnerTotalOwnership(), totalCapital = partners.reduce((s, pr) => s + num(pr.capital), 0);
-  
-  const empCalcs = (state.employees || []).map(e => { const pc = calcPayroll(e); return { ...e, ...pc }; });
-  let totalGross = 0, totalPaye = 0, totalUifEmp = 0, totalUifCo = 0, totalSdl = 0;
-  empCalcs.forEach(e => { totalGross += e.gross; totalPaye += e.paye; totalUifEmp += e.uif; totalUifCo += e.uif; totalSdl += e.sdl; });
-
-  const vatRate = num(co.vatRate) / 100, factor = co.vatInclusive ? 1 / (1 + vatRate) : 1;
-  const stdRev = state.incomes.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
-  const stdExp = state.expenses.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
-  const vatCollected = co.vatEnabled ? stdRev * vatRate * factor : 0;
-  const vatPaid = co.vatEnabled ? stdExp * vatRate * factor : 0;
-
-  const plainStmt = rows => `<table><tbody>${rows.map(r => {
-    if (r.section) return `<tr><td colspan="2" style="padding-top:12px;font-weight:700;font-size:10px;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid #000">${esc(r.label)}</td></tr>`;
-    return `<tr><td style="padding-left:${r.indent ? 16 : 0}px${r.grand ? ';font-weight:800;border-top:2px solid #000' : r.total ? ';font-weight:700' : ''}">${esc(r.label)}</td><td class="r"${r.grand ? ' style="font-weight:800;border-top:2px solid #000"' : r.total ? ' style="font-weight:700"' : ''}>${r.value == null ? '' : money(r.value)}</td></tr>`;
-  }).join('')}</tbody></table>`;
-
-  const adjustments = [
-    { label: getTerm('profit'), value: c.net, indent: false },
-    { label: 'Adjustments for non-cash items:', value: null, section: true },
-    { label: 'Depreciation', value: c.dep, indent: true },
-    { label: 'Changes in working capital:', value: null, section: true },
-    { label: '(Increase)/Decrease in Trade Receivables', value: -num(state.company.tradeReceivables), indent: true },
-    { label: 'Increase/(Decrease) in Trade Payables', value: num(state.company.tradePayables), indent: true },
-    { label: 'Cash generated from operations', value: c.net + c.dep - num(state.company.tradeReceivables) + num(state.company.tradePayables), total: true, strong: true, rule: true },
-    { label: 'Taxation paid', value: -c.tax, indent: true },
-    { label: 'Net cash from operating activities', value: c.net + c.dep - num(state.company.tradeReceivables) + num(state.company.tradePayables) - c.tax, total: true, strong: true, rule: true },
-    { label: 'Cash flows from investing activities', value: null, section: true },
-    { label: 'Purchase of PPE', value: -c.assetBuys, indent: true },
-    { label: 'Net cash from investing activities', value: -c.assetBuys, total: true, strong: true, rule: true },
-    { label: 'Net increase / (decrease) in cash', value: (c.net + c.dep - num(state.company.tradeReceivables) + num(state.company.tradePayables) - c.tax) - c.assetBuys, total: true, strong: true },
-    { label: 'Cash at beginning of period', value: c.openCash, indent: true },
-    { label: 'Cash at end of period', value: c.closeCash, grand: true }
-  ];
-
-  const taxable = Math.max(0, c.ebit), bands = co.sbcEnabled ? saSbcBands(taxable) : [];
+  const c = compute();
+  const b = computeBalanceSheet();
+  const co = state.company;
+  const p = P();
 
   return `
-  <div class="print-doc">
-    <div class="ph">
-      <div>
+    <div class="print-doc">
+      <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
         <h1>${esc(co.name || 'Company')}</h1>
-        <div>${esc(co.address || '')}</div>
-        <div><strong>Company registration no.:</strong> ${esc(co.regNo || '—')}</div>
-        <div>Income tax ref.: ${esc(co.taxId || '—')} · VAT reg. no.: ${esc(co.vatNo || '—')}</div>
-        ${co.ncrNo ? `<div><strong>NCR Registration:</strong> ${esc(co.ncrNo)}</div>` : ''}
-        ${co.fspNo ? `<div><strong>FSP License:</strong> ${esc(co.fspNo)}</div>` : ''}
-        <div>${esc(co.phone || '')}${co.phone && co.email ? ' · ' : ''}${esc(co.email || '')}</div>
+        <p>Financial Report: ${fmtDate(p.from)} to ${fmtDate(p.to)}</p>
       </div>
-      <div class="meta">
-        <div class="doc-title">Financial Report</div>
-        <div><strong>Period:</strong> ${fmtDate(p.from)} – ${fmtDate(p.to)}</div>
-        <div><strong>Generated:</strong> ${new Date().toLocaleString('en-ZA')}</div>
-        <div><strong>Currency:</strong> ${esc(co.currency || 'R')} (ZAR)</div>
-        <div><strong>Plan:</strong> Annual · valid to ${sub ? fmtDate(sub.end) : '—'}</div>
-      </div>
-    </div>
-
-    <div class="basis">
-      ${basisText}
-      <br><br>
-      <span style="font-size: 9px; color: #666;">
-        <b>Entity Lock:</b> The organization identity (Name: ${esc(co.name)}, Reg: ${esc(co.regNo)}) is locked for this 12-month subscription period in accordance with platform licensing rules.
-      </span>
-    </div>
-
-    <div class="section"><div class="summary">
-      <div>${getTerm('revenue')}<b>${money(c.revenue)}</b></div>
-      <div>Expenses<b>${money(c.totalExp)}</b></div>
-      <div>${getTerm('profit')}<b>${money(c.net)}</b></div>
-      <div>Cash at end<b>${money(c.closeCash)}</b></div>
-    </div></div>
-
-    <div class="section"><h2>Statement of Comprehensive Income</h2>${plainStmt(incomeStatementRows(c))}</div>
-    <div class="section"><h2>Statement of Financial Position</h2>${plainStmt(balanceSheetRows(b))}
-      <div style="margin-top:10px;border:1px solid #bbb;border-radius:5px;padding:8px 10px;font-size:10px">
-        <div style="display:flex;justify-content:space-between"><span><b>Balance check</b></span><span style="color:${Math.abs(b.difference) < 0.01 ? '#065f46' : '#991b1b'}">${Math.abs(b.difference) < 0.01 ? 'Balanced' : money(b.difference)}</span></div>
-        <div style="display:flex;justify-content:space-between;margin-top:3px;color:#555"><span>Total assets ${money(b.totalAssets)}</span><span>Total equity and liabilities ${money(b.totalEquityLiabilities)}</span></div>
-      </div>
-    </div>
-    
-    <div class="section"><h2>Statement of Cash Flows</h2>${plainStmt(adjustments)}</div>
-    
-    ${renderTrialBalance()}
-    
-    ${renderReconciliation()}
-
-    <div class="section"><h2>Monthly Performance Summary</h2>
-      <table><thead><tr><th>Month</th><th class="r">Receipts</th><th class="r">Income</th><th class="r">Expenses</th><th class="r">Net cash</th><th class="r">Cumulative</th></tr></thead>
-      <tbody>${monthRows || `<tr><td colspan="6">No monthly activity.</td></tr>`}</tbody></table>
-    </div>
-
-    <div class="section"><h2>Daily Sales / Income Received</h2>
-      <table><thead><tr><th>Date</th><th class="r">Receipts</th><th class="r">Income</th><th class="r">Expenses</th><th class="r">Net cash for day</th></tr></thead>
-      <tbody>${dayRows || `<tr><td colspan="5">No daily activity.</td></tr>`}
-        ${days.length ? `<tr class="tot"><td>Total</td><td class="r">${dayTotals.count}</td><td class="r">${money(dayTotals.income)}</td><td class="r">${money(dayTotals.expense)}</td><td class="r">${money(dayTotals.income - dayTotals.expense)}</td></tr>` : ''}
-      </tbody></table>
-    </div>
-
-    <div class="section"><h2>Asset Register</h2>
-      <table><thead><tr><th>Asset</th><th>Category</th><th>Purchased</th><th class="r">Cost</th><th class="r">Life</th><th class="r">Accum. dep.</th><th class="r">Net book value</th></tr></thead>
-      <tbody>${assetRows || `<tr><td colspan="7">No assets.</td></tr>`}</tbody></table>
-    </div>
-
-    ${partners.length ? `
-    <div class="section">
-      <h2>Partners &amp; Partner Agreements</h2>
-      <table>
-        <thead><tr><th>Name</th><th>ID / passport</th><th class="r">Ownership</th><th class="r">Capital</th><th>Role</th><th>Agreement date</th><th>Agreement ref.</th><th>Phone</th><th>Email</th><th>Notes</th></tr></thead>
-        <tbody>${partners.map(pr => `<tr><td>${esc(pr.name)}</td><td>${esc(pr.idNumber || '—')}</td><td class="r">${num(pr.ownership).toFixed(1)}%</td><td class="r">${money(pr.capital || 0)}</td><td>${esc(pr.role || '—')}</td><td>${esc(pr.agreementDate ? fmtDate(pr.agreementDate) : '—')}</td><td>${esc(pr.agreementRef || '—')}</td><td>${esc(pr.phone || '—')}</td><td>${esc(pr.email || '—')}</td><td>${esc(pr.notes || '')}</td></tr>`).join('')}</tbody>
-        <tfoot><tr><td colspan="2" style="text-align:right;font-weight:700;border-top:1px solid #000">Total</td><td class="r" style="font-weight:700;border-top:1px solid #000">${ownership.toFixed(1)}%</td><td class="r" style="font-weight:700;border-top:1px solid #000">${money0(totalCapital)}</td><td colspan="6" style="border-top:1px solid #000"></td></tr></tfoot>
+      
+      <h2>Income Statement</h2>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 5px 0;">Revenue</td><td style="text-align: right;">${money(c.revenue)}</td></tr>
+        <tr><td style="padding: 5px 0;">Expenses</td><td style="text-align: right;">${money(c.totalExp)}</td></tr>
+        <tr><td style="padding: 5px 0; border-top: 1px solid #000;"><b>Net Profit</b></td><td style="text-align: right; border-top: 1px solid #000;"><b>${money(c.net)}</b></td></tr>
       </table>
-    </div>` : ''}
 
-    ${suppliers.length ? `
-    <div class="section">
-      <h2>Suppliers &amp; Service Providers</h2>
-      <table>
-        <thead><tr><th>Name</th><th>Category</th><th>Contact</th><th>Phone</th><th>Email</th><th>VAT no.</th><th>Payment terms</th><th>Bank details</th></tr></thead>
-        <tbody>${suppliers.map(su => `<tr><td>${esc(su.name)}</td><td>${esc(su.category || '—')}</td><td>${esc(su.contact || '—')}</td><td>${esc(su.phone || '—')}</td><td>${esc(su.email || '—')}</td><td>${esc(su.vatNo || '—')}</td><td>${esc(su.terms || '—')}</td><td>${esc(su.bankDetails || '—')}</td></tr>`).join('')}</tbody>
+      <h2 style="margin-top: 30px;">Balance Sheet</h2>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 5px 0;">Total Assets</td><td style="text-align: right;">${money(b.totalAssets)}</td></tr>
+        <tr><td style="padding: 5px 0;">Total Equity & Liabilities</td><td style="text-align: right;">${money(b.totalEquityLiabilities)}</td></tr>
       </table>
-    </div>` : ''}
-
-    ${(state.bills && state.bills.length) ? `
-    <div class="section">
-      <h2>Supplier Bills (Creditors)</h2>
-      <table><thead><tr><th>Bill #</th><th>Supplier</th><th>Date</th><th>Due</th><th class="r">Amount</th><th>Status</th></tr></thead>
-      <tbody>${state.bills.sort((a,b) => a.date.localeCompare(b.date)).map(b => `<tr><td>${esc(b.billNo)}</td><td>${esc(b.supplier)}</td><td>${fmtDate(b.date)}</td><td>${fmtDate(b.dueDate)}</td><td class="r">${money(b.amount)}</td><td>${b.status}</td></tr>`).join('')}</tbody>
-      <tfoot><tr class="tot"><td colspan="4" style="text-align:right">Total Outstanding</td><td class="r">${money(state.bills.filter(b => b.status === 'Unpaid').reduce((a, b) => a + num(b.amount), 0))}</td><td></td></tr></tfoot>
-      </table>
-    </div>` : ''}
-
-    ${empCalcs.length ? `
-    <div class="section">
-      <h2>Payroll &amp; EMP201 Summary</h2>
-      <table><thead><tr><th>Emp No.</th><th>Employee</th><th>ID Number</th><th>Contact</th><th class="r">Gross</th><th class="r">PAYE</th><th class="r">UIF</th><th class="r">Net Pay</th></tr></thead>
-      <tbody>${empCalcs.map(e => `<tr><td>${esc(e.empNo || '—')}</td><td>${esc(e.name)}</td><td>${esc(e.idNumber)}</td><td>${esc(e.phone || e.email || '—')}</td><td class="r">${money(e.gross)}</td><td class="r">${money(e.paye)}</td><td class="r">${money(e.uif)}</td><td class="r">${money(e.net)}</td></tr>`).join('')}</tbody></table>
-      <h3 style="margin-top:16px;font-size:11px;text-transform:uppercase;letter-spacing:.08em">EMP201 Return Summary</h3>
-      <table><tbody>
-        <tr><td>Total PAYE</td><td class="r">${money(totalPaye)}</td></tr>
-        <tr><td>Total UIF (Employee + Employer)</td><td class="r">${money(totalUifEmp + totalUifCo)}</td></tr>
-        <tr><td>Total SDL</td><td class="r">${money(totalSdl)}</td></tr>
-        <tr class="tot"><td>Total Due to SARS</td><td class="r">${money(totalPaye + totalUifEmp + totalUifCo + totalSdl)}</td></tr>
-      </tbody></table>
-    </div>
-    <div class="section">
-      <h2>Employee Payslips</h2>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        ${empCalcs.map(e => `
-          <div style="border:1px solid #999;border-radius:5px;padding:12px;font-size:10.5px;break-inside:avoid">
-            <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:8px"><strong>${esc(co.name || 'Company')}</strong><br>Payslip: ${new Date().toLocaleString('en-ZA', { month: 'long', year: 'numeric' })}</div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:9.5px;color:#444"><span>Emp No: <b>${esc(e.empNo || '—')}</b></span><span>Contact: ${esc(e.phone || e.email || '—')}</span></div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span>Name: <b>${esc(e.name)}</b></span><span>ID: ${esc(e.idNumber)}</span></div>
-            <table style="font-size:10.5px"><tbody>
-              <tr><td>Gross Salary</td><td class="r">${money(e.gross)}</td></tr>
-              <tr><td>PAYE</td><td class="r">-${money(e.paye)}</td></tr>
-              <tr><td>UIF (1%)</td><td class="r">-${money(e.uif)}</td></tr>
-              <tr class="tot"><td>Net Pay</td><td class="r">${money(e.net)}</td></tr>
-            </tbody></table>
-            <div style="text-align:center;font-size:9px;color:#555;margin-top:8px">Co. UIF: ${money(e.uif)} | SDL: ${money(e.sdl)}</div>
-          </div>
-        `).join('')}
-      </div>
-    </div>` : ''}
-
-    <div class="section"><h2>Tax Summary</h2>
-      <table><tbody>
-        ${co.vatEnabled ? `<tr><td>Output VAT collected (${num(co.vatRate).toFixed(1)}%)</td><td class="r">${money(vatCollected)}</td></tr><tr><td>Input VAT paid (${num(co.vatRate).toFixed(1)}%)</td><td class="r">−${money(vatPaid)}</td></tr><tr class="tot"><td>Net VAT payable / (refundable)</td><td class="r">${money(vatCollected - vatPaid)}</td></tr>` : ''}
-        <tr><td>Taxable profit (EBIT)</td><td class="r">${money(taxable)}</td></tr>
-        <tr><td>Method</td><td class="r">${isNonProfit ? 'Tax Exempt (S10)' : co.sbcEnabled ? 'SBC sliding scale' : 'Flat rate ' + num(co.incomeTaxRate).toFixed(1) + '%'}</td></tr>
-        ${!isNonProfit && co.sbcEnabled && bands.length ? bands.map(band => `<tr><td style="padding-left:16px">${band.label} @ ${band.rate.toFixed(0)}% on ${money(band.base)}</td><td class="r">${money(band.tax)}</td></tr>`).join('') : ''}
-        <tr class="tot"><td>Estimated normal tax</td><td class="r">${money(c.tax)}</td></tr>
-        <tr class="tot"><td>Profit for the period after tax</td><td class="r">${money(c.net)}</td></tr>
-      </tbody></table>
-    </div>
-
-    <div class="section" style="break-before: page;">
-      <h2>Notes to the Financial Statements</h2>
-      <h3>1. Basis of Preparation</h3>
-      <p style="font-size: 11px; line-height: 1.5;">The financial statements have been prepared in accordance with the International Financial Reporting Standard for Small and Medium-sized Entities (IFRS for SMEs). The financial statements are prepared on the historical cost basis and incorporate the principal accounting policies set out below.</p>
-      <h3>2. Property, Plant and Equipment</h3>
-      <p style="font-size: 11px; line-height: 1.5;">Property, plant and equipment are stated at cost less accumulated depreciation. Depreciation is calculated on the straight-line basis over the estimated useful lives of the assets.</p>
-      <table style="margin-top: 8px;">
-        <thead><tr><th>Asset</th><th class="r">Opening Cost</th><th class="r">Additions</th><th class="r">Accum. Dep.</th><th class="r">Net Book Value</th></tr></thead>
-        <tbody>
-          ${state.assets.filter(a => !a.sold).map(a => {
-            const v = assetValuation(a);
-            return `<tr><td>${esc(a.name)}</td><td class="r">${money(a.cost)}</td><td class="r">—</td><td class="r">${money(v.accum)}</td><td class="r">${money(v.nbv)}</td></tr>`;
-          }).join('')}
-        </tbody>
-      </table>
-      <h3>3. Taxation</h3>
-      <p style="font-size: 11px; line-height: 1.5;">Current tax is provided for at the current tax rates applicable in South Africa. ${state.company.sbcEnabled ? 'The company qualifies as a Small Business Corporation and is taxed on the sliding scale.' : 'The company is taxed at the standard flat rate.'} Deferred tax is provided for on temporary differences.</p>
-      <h3>4. Going Concern</h3>
-      <p style="font-size: 11px; line-height: 1.5;">The financial statements have been prepared on the going concern basis. The management has every reason to believe that the organization has adequate resources to continue in operational existence for the foreseeable future.</p>
-    </div>
-
-    ${(co.accName && co.accFirm) ? `
-    <div class="section" style="break-before: page; margin-top: 40px;">
-      <h2 style="border-bottom: 2px solid #000; padding-bottom: 4px;">${esc(co.accReportType)}</h2>
-      <div style="margin: 24px 0; font-size: 12px; line-height: 1.8; text-align: justify;">
-        <p><strong>To the Management of ${esc(co.name)}</strong></p>
-        <p>We have compiled and verified the accompanying statement of financial position of <strong>${esc(co.name)}</strong> as at ${fmtDate(p.to)}, and the related statements of comprehensive income, and cash flows for the period then ended. The figures presented reflect the <b>actual financial position</b> of the organization.</p>
-        <p>${co.accOpinion ? esc(co.accOpinion) : `We performed this engagement in accordance with the International Standards on Related Services (ISRS) 4410, Compilation Engagements, and in accordance with the requirements of the professional body of the practitioner. We have verified the underlying records to the best of our ability. These statements are not audited, and accordingly, we do not express an audit opinion.`}</p>
-      </div>
-      <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: flex-end;">
-        <div>
-          <div style="border-bottom: 1px solid #000; width: 220px; margin-bottom: 6px;"></div>
-          <div><strong>${esc(co.accName)}</strong></div>
-          <div>${esc(co.accBody)} Member No: ${esc(co.accNumber)}</div>
-          <div>${esc(co.accFirm)}</div>
-          <div>Date: ${fmtDate(todayISO())}</div>
-        </div>
-        <div style="text-align: center; font-size: 11px; color: #065f46; border: 2px solid #065f46; padding: 8px 12px; border-radius: 4px; transform: rotate(-5deg); font-weight: 800; letter-spacing: 1px;">
-          <div>✓ VERIFIED ACTUAL FIGURES</div>
-          <div style="font-size: 9px; font-weight: normal; margin-top: 2px;">${esc(co.accFirm)}</div>
-        </div>
+      
+      <div style="margin-top: 40px; text-align: center; font-size: 10px;">
+        Generated by Viewport Accounting
       </div>
     </div>
-    ` : ''}
-
-    <div class="foot">
-      Prepared by ${esc(co.name || 'the business')} (Reg. no. ${esc(co.regNo || '—')}) · ${fmtDate(p.from)} to ${fmtDate(p.to)} ·
-      ${footText}
-      Tax figures are subject to final assessment by SARS or a registered tax practitioner.
-      ${co.orgType === 'financial' ? `<br><br><strong>Regulatory Compliance:</strong> NCR: ${esc(co.ncrNo || 'N/A')} · FSP: ${esc(co.fspNo || 'N/A')}.` : ''}
-      <br>Viewport Accounting Tool annual plan — access valid to ${sub ? fmtDate(sub.end) : '—'}.
-    </div>
-  </div>`;
+  `;
 }
 function doPrint() {
   if (!state) return;
