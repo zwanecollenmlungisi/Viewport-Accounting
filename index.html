@@ -1319,10 +1319,7 @@ if (SUPABASE_URL.includes('YOUR_') || SUPABASE_ANON_KEY.includes('YOUR_')) {
     document.body.appendChild(b);
   });
 }
-
-/* =====================================================================
-   2. UTILITIES
-   ===================================================================== */
+  
 const $  = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -1455,9 +1452,6 @@ function getTerm(key) {
   return terms[key] || key;
 }
 
-/* =====================================================================
-   3. AUTH & STATE
-   ===================================================================== */
 const PLAN_PRICE  = 3850;
 const PLAN_MONTHS = 12;
 
@@ -1468,66 +1462,7 @@ function subStatus(sub) {
   if (d <= 30) return { state: 'expiring', days: d };
   return { state: 'active', days: d };
 }
-/* ================= PROFILE & SECURITY ================= */
-function freezeState() {
-  if (state && !Object.isFrozen(state)) {
-    Object.freeze(state.company); 
-  }
-}
 
-function renderPaywall() {
-  const st = subStatus(currentUser.subscription);
-  if (st.state === 'expired') {
-    if (!document.getElementById('paywallOverlay')) {
-      const overlay = document.createElement('div');
-      overlay.id = 'paywallOverlay';
-      overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(255,255,255,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;';
-      overlay.innerHTML = `
-        <div style="font-size:40px; margin-bottom:15px;">🔒</div>
-        <h2 style="margin:0 0 10px; font-size:24px;">Subscription Expired</h2>
-        <p style="color:#64748b; max-width:400px; margin-bottom:20px;">Your 12-month access has ended. Renew now for ${money0(PLAN_PRICE)} to regain access.</p>
-        <button class="btn primary lg" onclick="renewSubscription()">Renew Access</button>
-        <button class="btn ghost" onclick="logout()" style="margin-top:10px;">Log Out</button>
-      `;
-      document.body.appendChild(overlay);
-    }
-  } else {
-    const overlay = document.getElementById('paywallOverlay');
-    if (overlay) overlay.remove();
-  }
-}
-
-// Anti-tamper check (runs every 2 seconds)
-setInterval(() => {
-  if (currentUser && subStatus(currentUser.subscription).state === 'expired') {
-    const overlay = document.getElementById('paywallOverlay');
-    if (!overlay) renderPaywall(); 
-  }
-}, 2000);
-
-function renderProfile() {
-  if (!currentUser) return;
-  $('#profName').value = currentUser.profile.full_name || currentUser.name || '';
-  $('#profEmail').value = currentUser.email || '';
-}
-
-window.updateProfile = async function() {
-  const newName = $('#profName').value.trim();
-  if (newName.length < 2) return alert('Name is too short.');
-  const { error } = await supabase.from('profiles').update({ full_name: newName }).eq('id', currentUser.id);
-  if (error) return alert('Error updating profile: ' + error.message);
-  currentUser.name = newName;
-  currentUser.profile.full_name = newName;
-  updateUserChip();
-  alert('Profile updated successfully!');
-};
-
-window.sendPasswordReset = async function() {
-  if (!currentUser || !currentUser.email) return;
-  const { error } = await supabase.auth.resetPasswordForEmail(currentUser.email, { redirectTo: window.location.origin });
-  if (error) return alert('Error sending reset email: ' + error.message);
-  alert('Password reset link sent to ' + currentUser.email);
-};
 let currentUser = null;
 let state = null;
 let booted = false;
@@ -1642,7 +1577,6 @@ async function fetchProfile(userId) {
   return data;
 }
 
-/* ---------- AUTH FUNCTIONS ---------- */
 async function doSignup(e) {
   e.preventDefault();
   clearAlert();
@@ -1701,7 +1635,7 @@ async function doSignup(e) {
     await supabase.from('profiles').update({
       subscription_start: start, subscription_end: end,
       subscription_amount: PLAN_PRICE, subscription_reference: reference,
-      subscription_renewals: [], payment_status: 'paid' // Mark paid for demo
+      subscription_renewals: [], payment_status: 'paid'
     }).eq('id', data.user.id);
 
     if (sample) {
@@ -1802,9 +1736,6 @@ setTimeout(() => {
   if (boot && site && boot.style.display !== 'none' && site.style.display === 'none') showLanding();
 }, 3000);
 
-/* =====================================================================
-   4. WORKSPACE, REALTIME & PERSISTENCE
-   ===================================================================== */
 async function checkPendingInvites() {
   if (!currentUser) return;
   const { data: invites } = await supabase
@@ -1871,7 +1802,6 @@ async function loadState() {
 
 function saveState() {
   if (!currentUser || !state || !activeWorkspaceId) return;
-  // INSTANT SAVE: Removed setTimeout to prevent data loss on refresh
   pushStateToSupabase();
 }
 
@@ -1912,9 +1842,7 @@ async function pushProfileToSupabase() {
     acc_name: co.accName, acc_firm: co.accFirm, acc_body: co.accBody,
     acc_number: co.accNumber, acc_report_type: co.accReportType, acc_opinion: co.accOpinion,
     lock_date: co.lockDate || null,
-    opening_cash: num(co.openingCash), 
-    bank_balance: num(co.bankBalance),
-    opening_retained_earnings: num(co.openingRetainedEarnings),
+    opening_cash: num(co.openingCash), bank_balance: num(co.bankBalance), opening_retained_earnings: num(co.openingRetainedEarnings),
     inventory: num(co.inventory), trade_receivables: num(co.tradeReceivables),
     trade_payables: num(co.tradePayables), long_term_loans: num(co.longTermLoans),
     other_non_current_assets: num(co.otherNonCurrentAssets), deferred_tax: num(co.deferredTax)
@@ -1957,7 +1885,7 @@ function addAuditLog(action, details) {
 }
 
 /* =====================================================================
-   5. DATA MODEL & SEEDING
+   DATA MODEL & SEEDING
    ===================================================================== */
 const CATEGORIES = {
   income:  ['Sales', 'Services', 'Grants', 'Interest', 'Other income'],
@@ -1975,9 +1903,7 @@ function emptyState() {
       vatEnabled: false, vatInclusive: false, sbcEnabled: true, orgType: 'company',
       ncrNo: '', fspNo: '', accName: '', accFirm: '', accBody: 'SAIPA', accNumber: '', accReportType: 'Compilation Report', accOpinion: '',
       lockDate: '', 
-      openingCash: 0, bankBalance: 0, openingRetainedEarnings: 0, inventory: 0, 
-      tradeReceivables: 0, tradePayables: 0, longTermLoans: 0, 
-      otherNonCurrentAssets: 0, deferredTax: 0
+      openingCash: 0, bankBalance: 0, openingRetainedEarnings: 0, inventory: 0, tradeReceivables: 0, tradePayables: 0, longTermLoans: 0, otherNonCurrentAssets: 0, deferredTax: 0
     },
     incomes: [], 
     expenses: [], 
@@ -2009,7 +1935,7 @@ function seedState() {
     currency: 'R', incomeTaxRate: 27, vatRate: 15, vatEnabled: true, vatInclusive: false, sbcEnabled: true, orgType: 'company',
     ncrNo: '', fspNo: '', accName: 'John Doe', accFirm: 'Doe & Associates', accBody: 'SAICA', accNumber: '123456', accReportType: 'Compilation Report', accOpinion: '',
     lockDate: '',
-    openingCash: 100000, openingRetainedEarnings: 0, inventory: 0, tradeReceivables: 0, tradePayables: 0, longTermLoans: 0, otherNonCurrentAssets: 0, deferredTax: 0
+    openingCash: 100000, bankBalance: 0, openingRetainedEarnings: 0, inventory: 0, tradeReceivables: 0, tradePayables: 0, longTermLoans: 0, otherNonCurrentAssets: 0, deferredTax: 0
   };
 
   for (let i = 5; i >= 0; i--) {
@@ -2067,7 +1993,7 @@ function seedState() {
 }
 
 /* =====================================================================
-   6. PERIOD & CALCULATIONS
+   PERIOD & CALCULATIONS
    ===================================================================== */
 const P = () => state.period;
 const inP = d => d >= P().from && d <= P().to;
@@ -2269,7 +2195,7 @@ function buildBuckets(gran) {
 }
 
 /* =====================================================================
-   7. CHARTS (SVG)
+   CHARTS
    ===================================================================== */
 function barChartSVG(series) {
   const W = 680, H = 270, L = 58, R = 14, T = 16, B = 38;
@@ -2302,20 +2228,28 @@ function barChartSVG(series) {
   s += `</svg>`;
   return s;
 }
-  
+
 function donutSVG(items, total) {
   const r = 58, C = 2 * Math.PI * r;
   let off = 0;
   let s = `<svg viewBox="0 0 160 160" role="img">`;
-  if (!items.length) s += `<circle cx="80" cy="80" r="${r}" fill="none" stroke="#eef2f7" stroke-width="26"/>`;
-  else items.forEach(it => {
-    const len = (it.value / total) * C;
-    s += `<circle cx="80" cy="80" r="${r}" fill="none" stroke="${it.color}" stroke-width="26" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-off}" transform="rotate(-90 80 80)"/>`;
-    off += len;
-  });
-  s += `<text x="80" y="76" text-anchor="middle" style="font-size:11px;fill:#94a3b8">Total</text><text x="80" y="93" text-anchor="middle" style="font-size:13px;font-weight:700;fill:#0f172a">${esc(shortNum(total))}</text></svg>`;
+  
+  if (!items.length) {
+    s += `<circle cx="80" cy="80" r="${r}" fill="none" stroke="#eef2f7" stroke-width="26"/>`;
+  } else {
+    items.forEach(it => {
+      const len = (it.value / total) * C;
+      s += `<circle cx="80" cy="80" r="${r}" fill="none" stroke="${it.color}" stroke-width="26" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-off}" transform="rotate(-90 80 80)"/>`;
+      off += len;
+    });
+  }
+  
+  s += `<text x="80" y="76" text-anchor="middle" style="font-size:11px;fill:#94a3b8">Total</text>`;
+  s += `<text x="80" y="93" text-anchor="middle" style="font-size:13px;font-weight:700;fill:#0f172a">${esc(shortNum(total))}</text>`;
+  s += `</svg>`;
   return s;
 }
+
 function lineChartSVG(points) {
   const W = 680, H = 230, L = 64, R = 16, T = 16, B = 36;
   const iw = W - L - R, ih = H - T - B;
@@ -2323,19 +2257,41 @@ function lineChartSVG(points) {
   const min = Math.min(0, ...vals), max = Math.max(1, ...vals), span = (max - min) || 1;
   const X = i => points.length === 1 ? L + iw / 2 : L + (iw * i) / (points.length - 1);
   const Y = v => T + ih - ((v - min) / span) * ih;
+  
   let s = `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img">`;
+  
   for (let i = 0; i <= 4; i++) {
     const v = min + span * i / 4, y = Y(v);
-    s += `<line class="grid" x1="${L}" y1="${y}" x2="${W - R}" y2="${y}"/><text class="axis" x="${L - 8}" y="${y + 4}" text-anchor="end">${shortNum(v)}</text>`;
+    s += `<line class="grid" x1="${L}" y1="${y}" x2="${W - R}" y2="${y}"/>`;
+    s += `<text class="axis" x="${L - 8}" y="${y + 4}" text-anchor="end">${shortNum(v)}</text>`;
   }
-  if (min < 0 && max > 0) s += `<line class="zero" x1="${L}" y1="${Y(0)}" x2="${W - R}" y2="${Y(0)}"/>`;
+  
+  if (min < 0 && max > 0) {
+    s += `<line class="zero" x1="${L}" y1="${Y(0)}" x2="${W - R}" y2="${Y(0)}"/>`;
+  }
+  
   const pts = points.map((p, i) => `${X(i)},${Y(p.value)}`);
   if (pts.length > 1) {
-    s += `<path d="M${pts.join(' L')} L${X(points.length - 1)},${T + ih} L${X(0)},${T + ih} Z" fill="rgba(0,122,77,.10)"/><polyline points="${pts.join(' ')}" fill="none" stroke="#007a4d" stroke-width="2.5" stroke-linejoin="round"/>`;
+    s += `<path d="M${pts.join(' L')} L${X(points.length - 1)},${T + ih} L${X(0)},${T + ih} Z" fill="rgba(0,122,77,.10)"/>`;
+    s += `<polyline points="${pts.join(' ')}" fill="none" stroke="#007a4d" stroke-width="2.5" stroke-linejoin="round"/>`;
   }
+  
+  const labelStep = Math.max(1, Math.ceil(points.length / 6));
+
+  points.forEach((p, i) => {
+    s += `<circle cx="${X(i)}" cy="${Y(p.value)}" r="3.5" fill="#007a4d"><title>${esc(p.label)}: ${esc(money(p.value))}</title></circle>`;
+    
+    if (i === 0 || i === points.length - 1 || i % labelStep === 0) {
+      s += `<text class="axis" x="${X(i)}" y="${H - B + 20}" text-anchor="middle">${esc(p.label)}</text>`;
+    }
+  });
+  
+  s += `</svg>`;
+  return s;
+}
 
 /* =====================================================================
-   8. STATEMENTS
+   STATEMENTS
    ===================================================================== */
 function incomeStatementRows(c) {
   const rows = [], add = (label, value, opt = {}) => rows.push({ label, value, ...opt });
@@ -2415,19 +2371,16 @@ function stmtHTML(rows) {
 }
 
 /* =====================================================================
-   9. RENDER FUNCTIONS
+   RENDER FUNCTIONS
    ===================================================================== */
 function render() {
   if (!state || !currentUser) return;
   $('#topCoName').textContent = state.company.name || 'Your Organization';
   $('#topPeriod').textContent = `${fmtDate(P().from)} – ${fmtDate(P().to)}`;
   renderPlanStatus();
-  renderPaywall();  
-  freezeState();     
 
   const st = subStatus(currentUser.subscription);
   const isExpired = st.state === 'expired'; 
-  // Note: payment_status check bypassed for demo
 
   if (isExpired) {
     $$('#app input:not(#bannerRenew), #app select, #app textarea, #app button:not(#btnLogout):not(#bannerRenew)').forEach(el => el.disabled = true);
@@ -2452,12 +2405,11 @@ function render() {
     if (view === 'products')  renderProducts();
     if (view === 'payroll')   renderPayroll();
     if (view === 'assets')    renderAssets();
-    if (view === 'import')    { /* handled inline */ }
     if (view === 'registers') renderRegisters();
     if (view === 'reports')   { renderReports(); renderBalanceSheet(); renderReconciliationView(); }
     if (view === 'tax')       renderTax();
     if (view === 'settings')  { renderSettings(); renderTeam(); renderAuditLog(); }
-    if (view === 'profile')   renderProfile(); // <--- ADD THIS LINE
+    if (view === 'profile')   renderProfile();
   } catch (error) {
     console.error("Error rendering view:", view, error);
   }
@@ -2917,9 +2869,6 @@ function renderReports() {
   $('#stmtIncome').innerHTML = verifyBadge + stmtHTML(incomeStatementRows(c));
   $('#stmtCash').innerHTML = stmtHTML(cashFlowRows(c));
 }
-  function renderReconciliationView() {
-  $('#stmtReconciliation').innerHTML = renderReconciliation();
-}
 function renderBalanceSheet() {
   const b = computeBalanceSheet(), isBalanced = Math.abs(b.difference) < 0.01;
   const isVerified = !!(state.company.accName && state.company.accFirm);
@@ -2935,20 +2884,64 @@ function renderBalanceSheet() {
       ${!isBalanced ? `<p class="bs-check-note">Difference indicates items not captured. Check opening capital, retained earnings, loans, receivables, or prior VAT/tax. Update in Settings to reconcile.</p>` : ''}
     </div>`;
 }
+
+function renderTrialBalance() {
+  const c = compute();
+  const bs = computeBalanceSheet();
+  
+  const tb = [
+    { code: '1000', name: 'Cash and Cash Equivalents', dr: bs.cash, cr: 0 },
+    { code: '1200', name: 'Trade Receivables (Debtors)', dr: bs.receivables, cr: 0 },
+    { code: '1300', name: 'Inventory', dr: bs.inventory, cr: 0 },
+    { code: '1500', name: 'Property, Plant & Equipment (Cost)', dr: state.assets.reduce((a,b)=>a+num(b.cost),0), cr: 0 },
+    { code: '1510', name: 'Accumulated Depreciation', dr: 0, cr: state.assets.reduce((a,b)=>a+assetValuation(b).accum,0) },
+    { code: '2000', name: 'Trade Payables (Creditors)', dr: 0, cr: bs.tradePayables },
+    { code: '2100', name: 'VAT Payable', dr: 0, cr: Math.max(0, bs.vatPayable) },
+    { code: '2200', name: 'Income Tax Payable', dr: 0, cr: Math.max(0, bs.taxPayable) },
+    { code: '2300', name: 'Deferred Tax Liability', dr: 0, cr: num(state.company.deferredTax) },
+    { code: '3000', name: getTerm('capital'), dr: 0, cr: bs.partnerCapital },
+    { code: '3100', name: getTerm('retained'), dr: 0, cr: bs.retainedEarnings },
+    { code: '4000', name: 'Revenue / Income', dr: 0, cr: c.revenue },
+    { code: '5000', name: 'Cost of Sales', dr: c.cogs, cr: 0 },
+    { code: '6000', name: 'Operating Expenses', dr: c.opex, cr: 0 },
+    { code: '7000', name: 'Depreciation Expense', dr: c.dep, cr: 0 },
+    { code: '8000', name: 'Taxation Expense', dr: c.tax, cr: 0 }
+  ];
+
+  const totalDr = tb.reduce((a, b) => a + b.dr, 0);
+  const totalCr = tb.reduce((a, b) => a + b.cr, 0);
+
+  return `
+    <div class="section">
+      <h2>Trial Balance</h2>
+      <table>
+        <thead><tr><th>Code</th><th>Account Name</th><th class="r">Debit (R)</th><th class="r">Credit (R)</th></tr></thead>
+        <tbody>
+          ${tb.map(row => `<tr><td>${row.code}</td><td>${row.name}</td><td class="r">${row.dr ? money(row.dr) : '—'}</td><td class="r">${row.cr ? money(row.cr) : '—'}</td></tr>`).join('')}
+        </tbody>
+        <tfoot>
+          <tr class="tot">
+            <td colspan="2" style="text-align:right">Totals</td>
+            <td class="r" style="color:${Math.abs(totalDr - totalCr) < 1 ? '#065f46' : '#991b1b'}">${money(totalDr)}</td>
+            <td class="r" style="color:${Math.abs(totalDr - totalCr) < 1 ? '#065f46' : '#991b1b'}">${money(totalCr)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  `;
+}
+
 function renderReconciliation() {
   const c = compute();
   const bs = computeBalanceSheet();
   const co = state.company;
   
-  // 1. Get the two balances
   const bankBalance = num(co.bankBalance);
   const systemCash = bs.cash;
   
-  // 2. Get outstanding items (deposits in transit and unpresented cheques)
   const outstandingDeposits = (state.invoices || []).filter(i => i.status === 'Unpaid').reduce((a, b) => a + num(b.amount), 0);
   const outstandingCheques = (state.bills || []).filter(b => b.status === 'Unpaid').reduce((a, b) => a + num(b.amount), 0);
   
-  // 3. Calculate Adjusted Balances
   const adjustedBank = bankBalance + outstandingDeposits - outstandingCheques;
   const adjustedSystem = systemCash + outstandingDeposits - outstandingCheques;
   const difference = adjustedBank - adjustedSystem;
@@ -3029,51 +3022,9 @@ function renderReconciliation() {
     </div>
   `;
 }
-  
-function renderTrialBalance() {
-  const c = compute();
-  const bs = computeBalanceSheet();
-  
-  const tb = [
-    { code: '1000', name: 'Cash and Cash Equivalents', dr: bs.cash, cr: 0 },
-    { code: '1200', name: 'Trade Receivables (Debtors)', dr: bs.receivables, cr: 0 },
-    { code: '1300', name: 'Inventory', dr: bs.inventory, cr: 0 },
-    { code: '1500', name: 'Property, Plant & Equipment (Cost)', dr: state.assets.reduce((a,b)=>a+num(b.cost),0), cr: 0 },
-    { code: '1510', name: 'Accumulated Depreciation', dr: 0, cr: state.assets.reduce((a,b)=>a+assetValuation(b).accum,0) },
-    { code: '2000', name: 'Trade Payables (Creditors)', dr: 0, cr: bs.tradePayables },
-    { code: '2100', name: 'VAT Payable', dr: 0, cr: Math.max(0, bs.vatPayable) },
-    { code: '2200', name: 'Income Tax Payable', dr: 0, cr: Math.max(0, bs.taxPayable) },
-    { code: '2300', name: 'Deferred Tax Liability', dr: 0, cr: num(state.company.deferredTax) },
-    { code: '3000', name: getTerm('capital'), dr: 0, cr: bs.partnerCapital },
-    { code: '3100', name: getTerm('retained'), dr: 0, cr: bs.retainedEarnings },
-    { code: '4000', name: 'Revenue / Income', dr: 0, cr: c.revenue },
-    { code: '5000', name: 'Cost of Sales', dr: c.cogs, cr: 0 },
-    { code: '6000', name: 'Operating Expenses', dr: c.opex, cr: 0 },
-    { code: '7000', name: 'Depreciation Expense', dr: c.dep, cr: 0 },
-    { code: '8000', name: 'Taxation Expense', dr: c.tax, cr: 0 }
-  ];
 
-  const totalDr = tb.reduce((a, b) => a + b.dr, 0);
-  const totalCr = tb.reduce((a, b) => a + b.cr, 0);
-
-  return `
-    <div class="section">
-      <h2>Trial Balance</h2>
-      <table>
-        <thead><tr><th>Code</th><th>Account Name</th><th class="r">Debit (R)</th><th class="r">Credit (R)</th></tr></thead>
-        <tbody>
-          ${tb.map(row => `<tr><td>${row.code}</td><td>${row.name}</td><td class="r">${row.dr ? money(row.dr) : '—'}</td><td class="r">${row.cr ? money(row.cr) : '—'}</td></tr>`).join('')}
-        </tbody>
-        <tfoot>
-          <tr class="tot">
-            <td colspan="2" style="text-align:right">Totals</td>
-            <td class="r" style="color:${Math.abs(totalDr - totalCr) < 1 ? '#065f46' : '#991b1b'}">${money(totalDr)}</td>
-            <td class="r" style="color:${Math.abs(totalDr - totalCr) < 1 ? '#065f46' : '#991b1b'}">${money(totalCr)}</td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-  `;
+function renderReconciliationView() {
+  $('#stmtReconciliation').innerHTML = renderReconciliation();
 }
 
 function renderTax() {
@@ -3159,6 +3110,12 @@ function renderSettings() {
   }
 }
 
+function renderProfile() {
+  if (!currentUser) return;
+  $('#profName').value = currentUser.profile.full_name || currentUser.name || '';
+  $('#profEmail').value = currentUser.email || '';
+}
+
 function renderSubscription() {
   const el = $('#subCard');
   if (!el || !currentUser) return;
@@ -3203,29 +3160,10 @@ function renderAuditLog() {
 window.clearAuditLog = function() { if (!confirm('Clear log?')) return; state.audit_log = []; refresh(); }
 
 /* =====================================================================
-   10. CSV IMPORT & PRINT HELPERS
+   CSV IMPORT & PRINT HELPERS
    ===================================================================== */
 let csvData = [];
-  window.parseBankDate = function(dateStr) {
-  if (!dateStr) return null;
-  dateStr = String(dateStr).trim();
-  
-  // Handle YYYY-MM-DD or YYYY/MM/DD (Standard format)
-  if (/^\d{4}[-/]\d{2}[-/]\d{2}$/.test(dateStr)) {
-    return new Date(dateStr.replace(/\//g, '-'));
-  }
-  
-  // Handle DD/MM/YYYY or DD-MM-YYYY (SA/UK format)
-  const parts = dateStr.split(/[-/ ]/);
-  if (parts.length === 3) {
-    if (parts[2].length === 4) return new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
-    if (parts[0].length === 4) return new Date(parts[0], parseInt(parts[1]) - 1, parts[2]);
-  }
-  
-  // Fallback for standard JS date strings with time (e.g., "2026-10-15 11:09")
-  const d = new Date(dateStr);
-  return isNaN(d.getTime()) ? null : d;
-};
+
 function cleanCurrency(val) {
   if (!val) return 0;
   let str = String(val).trim();
@@ -3247,6 +3185,19 @@ function cleanCurrency(val) {
   if (str.includes('-') || isNegative) num = -Math.abs(num);
   return num;
 }
+
+window.parseBankDate = function(dateStr) {
+  if (!dateStr) return null;
+  dateStr = String(dateStr).trim();
+  if (/^\d{4}[-/]\d{2}[-/]\d{2}$/.test(dateStr)) return new Date(dateStr.replace(/\//g, '-'));
+  const parts = dateStr.split(/[-/ ]/);
+  if (parts.length === 3) {
+    if (parts[2].length === 4) return new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
+    if (parts[0].length === 4) return new Date(parts[0], parseInt(parts[1]) - 1, parts[2]);
+  }
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? null : d;
+};
 
 window.handleCsvUpload = function(event) {
   const file = event.target.files[0];
@@ -3399,110 +3350,10 @@ window.cancelImport = function() {
   $('#mappingCard').classList.add('hidden');
   $('#uploadStep').classList.remove('hidden');
 };
-window.cancelImport = function() {
-  csvData = [];
-  $('#csvFileInput').value = '';
-  $('#mappingCard').classList.add('hidden');
-  $('#uploadStep').classList.remove('hidden');
-};
 
-function printVat201() {
-  const c = compute(), co = state.company, vatRate = num(co.vatRate) / 100, factor = co.vatInclusive ? 1 / (1 + vatRate) : 1;
-  const stdRev = state.incomes.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
-  const stdExp = state.expenses.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
-  const output = stdRev * vatRate * factor, input = stdExp * vatRate * factor, net = output - input;
-  
-  $('#print-root').innerHTML = `<div class="print-doc"><div class="ph"><div><h1>VAT201 Summary</h1><div><strong>Vendor:</strong> ${esc(co.name)}</div><div><strong>VAT Reg No:</strong> ${esc(co.vatNo)}</div></div><div class="meta"><div><strong>Period:</strong> ${fmtDate(P().from)} – ${fmtDate(P().to)}</div></div></div><div class="basis">System-generated summary for SARS eFiling.</div><table><tbody><tr><td>Field 1: Standard Rate Supplies</td><td class="r">${money(stdRev)}</td></tr><tr><td>Field 4: Output Tax</td><td class="r">${money(output)}</td></tr><tr><td>Field 14: Input Tax</td><td class="r">${money(input)}</td></tr><tr><td>Field 15: Net VAT Payable / (Refundable)</td><td class="r"><strong>${money(net)}</strong></td></tr></tbody></table></div>`;
-  window.print();
-}
-function printPayslips() {
-  if (!state || !state.employees || !state.employees.length) {
-    return alert('No employees to print payslips for.');
-  }
-
-  const empCalcs = state.employees.map(e => {
-    const c = calcPayroll(e);
-    return { ...e, ...c };
-  });
-
-  const html = `
-    <html>
-    <head>
-      <title>Payslips</title>
-      <style>
-        body { font-family: system-ui, sans-serif; padding: 20px; margin: 0; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
-        .slip { border: 1px solid #000; border-radius: 8px; padding: 24px; break-inside: avoid; }
-        
-        /* This is the single header for the payslip */
-        .slip-header { border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 16px; text-align: center; }
-        .slip-header h3 { margin: 0 0 5px; font-size: 18px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .slip-header div { font-size: 12px; color: #555; }
-        
-        .row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 12px; color: #333; }
-        .row-lg { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px dashed #ccc; }
-        
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        td { padding: 8px 0; border-bottom: 1px dashed #ddd; }
-        .net td { padding: 12px 0; font-weight: bold; border-top: 2px solid #000; border-bottom: none; font-size: 15px; }
-        .r { text-align: right; }
-        .footer { font-size: 10px; color: #777; margin-top: 20px; text-align: center; }
-        
-        @media print {
-          @page { size: A4; margin: 15mm; }
-          body { padding: 0; }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="grid">
-        ${empCalcs.map(e => `
-          <div class="slip">
-            <!-- Only ONE company name now -->
-            <div class="slip-header">
-              <h3>${esc(state.company.name || 'Company')}</h3>
-              <div>Payslip for ${new Date().toLocaleString('en-ZA', { month: 'long', year: 'numeric' })}</div>
-            </div>
-            
-            <div class="row">
-              <span><b>Emp No:</b> ${esc(e.empNo || '—')}</span>
-              <span><b>Contact:</b> ${esc(e.phone || e.email || '—')}</span>
-            </div>
-            <div class="row-lg">
-              <span><b>Employee:</b> ${esc(e.name)}</span>
-              <span><b>ID Number:</b> ${esc(e.idNumber)}</span>
-            </div>
-            
-            <table>
-              <tbody>
-                <tr><td>Gross Salary</td><td class="r">${money(e.gross)}</td></tr>
-                <tr><td>PAYE (Employee Tax)</td><td class="r" style="color: #b91c1c;">-${money(e.paye)}</td></tr>
-                <tr><td>UIF (1%)</td><td class="r" style="color: #b91c1c;">-${money(e.uif)}</td></tr>
-                <tr class="net"><td>Net Pay</td><td class="r">${money(e.net)}</td></tr>
-              </tbody>
-            </table>
-            
-            <div class="footer">
-              Employer Contributions: UIF ${money(e.uif)} | SDL ${money(e.sdl)}<br>
-              Generated by ${esc(state.company.name || 'Company')} on ${new Date().toLocaleDateString('en-ZA')}
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    </body>
-    </html>
-  `;
-
-  const printWindow = window.open('', '_blank');
-  printWindow.document.open();
-  printWindow.document.write(html);
-  printWindow.document.close();
-  
-  printWindow.onload = function() {
-    printWindow.focus();
-    printWindow.print();
-  };
-}
+/* =====================================================================
+   PRINT FUNCTIONS
+   ===================================================================== */
 window.printVat201 = function() {
   document.body.classList.remove('print-payslips'); 
   try {
