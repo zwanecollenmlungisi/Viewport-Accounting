@@ -3584,6 +3584,7 @@ function buildPrintDoc() {
     const v = assetValuation(a);
     return `<tr><td>${esc(a.name)}</td><td>${esc(a.category)}</td><td>${fmtDate(a.date)}</td><td class="r">${money(a.cost)}</td><td class="r">${num(a.life)} yr</td><td class="r">${money(v.accum)}</td><td class="r">${money(v.nbv)}</td></tr>`;
   }).join('');
+  
   const months = monthsInPeriod(p), idx = new Map(months.map((m, i) => [m.key, i]));
   const series = months.map(m => ({ label: m.label, income: 0, expense: 0 }));
   state.incomes.filter(t => inP(t.date) && !t.reversed).forEach(t => { const i = idx.get(t.date.slice(0,7)); if (i != null) series[i].income += num(t.amount); });
@@ -3846,7 +3847,7 @@ function buildPrintDoc() {
         : `Figures are management estimates and have not been audited or independently verified.`}
       Tax figures are subject to final assessment by SARS or a registered tax practitioner.
       ${co.orgType === 'financial' ? `<br><br><strong>Regulatory Compliance:</strong> NCR: ${esc(co.ncrNo || 'N/A')} · FSP: ${esc(co.fspNo || 'N/A')}.` : ''}
-      <br>BudgetZA annual plan — access valid to ${sub ? fmtDate(sub.end) : '—'}.
+      <br>Viewport Accounting Tool annual plan — access valid to ${sub ? fmtDate(sub.end) : '—'}.
     </div>
   </div>`;
 }
