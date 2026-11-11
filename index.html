@@ -3784,10 +3784,8 @@ function buildPrintDoc() {
 
     <div class="section" style="break-before: page;">
       <h2>Notes to the Financial Statements</h2>
-      
       <h3>1. Basis of Preparation</h3>
       <p style="font-size: 11px; line-height: 1.5;">The financial statements have been prepared in accordance with the International Financial Reporting Standard for Small and Medium-sized Entities (IFRS for SMEs). The financial statements are prepared on the historical cost basis and incorporate the principal accounting policies set out below.</p>
-
       <h3>2. Property, Plant and Equipment</h3>
       <p style="font-size: 11px; line-height: 1.5;">Property, plant and equipment are stated at cost less accumulated depreciation. Depreciation is calculated on the straight-line basis over the estimated useful lives of the assets.</p>
       <table style="margin-top: 8px;">
@@ -3799,10 +3797,8 @@ function buildPrintDoc() {
           }).join('')}
         </tbody>
       </table>
-
       <h3>3. Taxation</h3>
       <p style="font-size: 11px; line-height: 1.5;">Current tax is provided for at the current tax rates applicable in South Africa. ${state.company.sbcEnabled ? 'The company qualifies as a Small Business Corporation and is taxed on the sliding scale.' : 'The company is taxed at the standard flat rate.'} Deferred tax is provided for on temporary differences.</p>
-
       <h3>4. Going Concern</h3>
       <p style="font-size: 11px; line-height: 1.5;">The financial statements have been prepared on the going concern basis. The management has every reason to believe that the organization has adequate resources to continue in operational existence for the foreseeable future.</p>
     </div>
@@ -3810,20 +3806,11 @@ function buildPrintDoc() {
     ${(co.accName && co.accFirm) ? `
     <div class="section" style="break-before: page; margin-top: 40px;">
       <h2 style="border-bottom: 2px solid #000; padding-bottom: 4px;">${esc(co.accReportType)}</h2>
-      
       <div style="margin: 24px 0; font-size: 12px; line-height: 1.8; text-align: justify;">
         <p><strong>To the Management of ${esc(co.name)}</strong></p>
-        <p>
-          We have compiled and verified the accompanying statement of financial position of <strong>${esc(co.name)}</strong> as at 
-          ${fmtDate(p.to)}, and the related statements of comprehensive income, and cash flows for the period then ended. 
-          The figures presented reflect the <b>actual financial position</b> of the organization.
-        </p>
-        <p>
-          ${co.accOpinion ? esc(co.accOpinion) : 
-          `We performed this engagement in accordance with the International Standards on Related Services (ISRS) 4410, Compilation Engagements, and in accordance with the requirements of the professional body of the practitioner. We have verified the underlying records to the best of our ability. These statements are not audited, and accordingly, we do not express an audit opinion.`}
-        </p>
+        <p>We have compiled and verified the accompanying statement of financial position of <strong>${esc(co.name)}</strong> as at ${fmtDate(p.to)}, and the related statements of comprehensive income, and cash flows for the period then ended. The figures presented reflect the <b>actual financial position</b> of the organization.</p>
+        <p>${co.accOpinion ? esc(co.accOpinion) : `We performed this engagement in accordance with the International Standards on Related Services (ISRS) 4410, Compilation Engagements, and in accordance with the requirements of the professional body of the practitioner. We have verified the underlying records to the best of our ability. These statements are not audited, and accordingly, we do not express an audit opinion.`}</p>
       </div>
-
       <div style="margin-top: 50px; display: flex; justify-content: space-between; align-items: flex-end;">
         <div>
           <div style="border-bottom: 1px solid #000; width: 220px; margin-bottom: 6px;"></div>
