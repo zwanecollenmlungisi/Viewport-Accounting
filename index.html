@@ -1737,21 +1737,40 @@ async function doLogin(e) {
     btn.disabled = false;
   }
 }
-  
 async function logout() {
-  try { await flushSave(); } catch (err) { console.error('flush on logout', err); }
-  try { clearTimeout(profileSaveTimer); await pushProfileToSupabase(); } catch (err) { console.error(err); }
-  try { await supabase.auth.signOut(); } catch (err) { console.error(err); }
-  
+  try {
+    // Attempt to save any pending data before logging out
+    await flushSave();
+    clearTimeout(profileSaveTimer);
+    await pushProfileToSupabase();
+  } catch (err) {
+    console.error('Error flushing data on logout:', err);
+  }
+
+  try {
+    // Attempt to sign out from Supabase
+    await supabase.auth.signOut();
+  } catch (err) {
+    // Ignore 403 errors here. It just means the session was already invalid.
+    // The important part is that we continue to clear the local UI.
+    console.warn('Supabase signOut failed (likely session already expired):', err.message);
+  }
+
+  // --- This block ensures the user is logged out locally regardless of server response ---
   if (realtimeChannel) supabase.removeChannel(realtimeChannel);
   currentUser = null; state = null; booted = false; activeWorkspaceId = null;
   clearTimeout(saveTimer); clearTimeout(profileSaveTimer);
-  ['#formIncome', '#formExpense', '#formAsset'].forEach(sel => { const f = $(sel); if (f) f.reset(); });
+  
+  // Reset all forms and UI elements
+  ['#formIncome', '#formExpense', '#formAsset'].forEach(sel => { 
+    const f = $(sel); if (f) f.reset(); 
+  });
   $$('.fld').forEach(f => f.classList.remove('bad'));
   clearAlert();
+  
+  // Show the landing page
   showLanding();
 }
-
 supabase.auth.onAuthStateChange((event, session) => {
   setTimeout(async () => {
     if (event === 'SIGNED_OUT' || !session || !session.user) {
