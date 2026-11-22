@@ -696,6 +696,19 @@ table.sheet tfoot td{font-weight:700;background:#f8fafc;border-top:1px solid #e2
   </section>
 </div>
 
+  <!-- HARD PAYWALL -->
+<div id="payment-screen" style="display:none; position:fixed; inset:0; background:rgba(255,255,255,0.98); z-index:99999; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px;">
+  <div style="font-size:50px; margin-bottom:20px;">🔒</div>
+  <h1 style="font-size:28px; margin:0 0 10px; color:#0f172a;">Unlock Your Workspace</h1>
+  <p style="color:#64748b; max-width:400px; margin-bottom:30px; line-height:1.6;">
+    To access Viewport Accounting Tool and manage your organization's finances, please complete your once-off payment of <strong>R 4,850</strong> for 12 months of full access.
+  </p>
+  <button class="btn primary lg" onclick="simulateYocoPayment()" style="font-size:18px; padding:15px 30px;">
+    💳 Pay R 4,850 with Yoco
+  </button>
+  <button class="btn ghost" onclick="logout()" style="margin-top:20px;">Log out</button>
+</div>
+  
 <div id="app">
   <header class="topbar">
     <div class="top-header-inner">
@@ -1433,14 +1446,52 @@ function setAuthMode(mode) {
   clearAlert();
   $$('.fld').forEach(f => f.classList.remove('bad'));
 }
-function showApp() {
+async function showApp() {
   $('#boot').style.display = 'none';
   $('#site').style.display = 'none';
+  $('#app').style.display = 'none';
+
+  // 1. Check if this user is an invited team member
+  const { data: invite } = await supabase
+    .from('workspace_members')
+    .select('owner_id')
+    .eq('member_id', currentUser.id)
+    .eq('status', 'active')
+    .maybeSingle();
+
+  const isOwner = !invite;
+  activeWorkspaceId = invite ? invite.owner_id : currentUser.id;
+
+  // 2. Fetch the profile of the workspace we are trying to access
+  const workspaceProfile = await fetchProfile(activeWorkspaceId);
+  currentUser.profile = workspaceProfile;
+
+  // 3. Check Payment Status
+  const subEnd = workspaceProfile.subscription_end ? parseISO(workspaceProfile.subscription_end) : null;
+  const today = parseISO(todayISO());
+  const isPaid = workspaceProfile.payment_status === 'paid' && subEnd && subEnd >= today;
+
+  // 4. Enforce the Paywall
+  if (!isPaid && isOwner) {
+    // Owner hasn't paid: Show lock screen
+    $('#payment-screen').style.display = 'flex';
+    return;
+  } else if (!isPaid && !isOwner) {
+    // Collaborator trying to access an unpaid workspace
+    alert('Access denied. The workspace owner has not paid for a subscription.');
+    logout();
+    return;
+  }
+
+  // 5. If they passed the check, show the app
+  $('#payment-screen').style.display = 'none';
   $('#app').style.display = 'block';
   updateUserChip();
+  
   ['#formIncome', '#formExpense', '#formAsset'].forEach(sel => {
     const f = $(sel); if (f && f.date) f.date.value = todayISO();
   });
+  
   bootApp();
 }
 function updateUserChip() {
@@ -1632,6 +1683,52 @@ async function doLogin(e) {
   }
 }
 
+  async function simulateYocoPayment() {
+  const btn = event.target;
+  const origText = btn.textContent;
+  btn.textContent = 'Processing Payment...';
+  btn.disabled = true;
+
+  try {
+    // In the future, this will redirect to the Yoco Edge Function link.
+    // For now, we simulate a successful webhook by updating the database directly.
+    
+    const start = todayISO();
+    const end = addMonths(start, 12);
+    const reference = 'SIM-' + Date.now().toString(36).toUpperCase();
+
+    const { error } = await supabase.from('profiles').update({
+      payment_status: 'paid',
+      subscription_start: start,
+      subscription_end: end,
+      subscription_amount: 4850,
+      subscription_reference: reference
+    }).eq('id', currentUser.id);
+
+    if (error) throw error;
+
+    // Update local state
+    currentUser.profile.payment_status = 'paid';
+    currentUser.profile.subscription_start = start;
+    currentUser.profile.subscription_end = end;
+    currentUser.subscription = { plan: 'annual', amount: 4850, start, end, reference, renewals: [] };
+
+    alert('Payment successful! Welcome to Viewport Accounting.');
+    
+    // Load the app
+    $('#payment-screen').style.display = 'none';
+    $('#app').style.display = 'block';
+    bootApp();
+
+  } catch (err) {
+    console.error(err);
+    alert('Payment failed: ' + err.message);
+  } finally {
+    btn.textContent = origText;
+    btn.disabled = false;
+  }
+}
+  
 async function logout() {
   try { await flushSave(); } catch (err) { console.error('flush on logout', err); }
   try { clearTimeout(profileSaveTimer); await pushProfileToSupabase(); } catch (err) { console.error(err); }
