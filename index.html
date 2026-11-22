@@ -3861,6 +3861,19 @@ function init() {
     $('#topCoName').textContent = state.company.name || 'Your Organization';
   });
 
+  $('#formInvite')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const email = e.target.email.value.trim().toLowerCase();
+    
+    // Check limit
+    const { data: existing } = await supabase.from('workspace_members').select('id').eq('owner_id', activeWorkspaceId);
+    if (existing && existing.length >= 30) return alert('Maximum limit of 30 collaborators reached.');
+
+    const btn = e.target.querySelector('button[type="submit"]');
+    const origText = btn.textContent;
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+
     try {
       // 1. Save to Database
       const { error } = await supabase.from('workspace_members').insert({ 
@@ -3879,7 +3892,7 @@ function init() {
         invite_link: window.location.origin
       };
 
-      // PASTE YOUR GOOGLE APPS SCRIPT URL HERE
+      // ⚠️ PASTE YOUR GOOGLE APPS SCRIPT URL BELOW
       const GAS_URL = 'https://script.google.com/macros/s/AKfycbz4sCBjfyptjH7pynqHcEhcDriMTqoOiDXPutY2h0JgsiXAr0qRQaMpM1AN0b-2K-kO/exec'; 
 
       const response = await fetch(GAS_URL, {
@@ -3903,14 +3916,6 @@ function init() {
       btn.textContent = origText;
       btn.disabled = false;
     }
-
-  $('#btnAddProduct')?.addEventListener('click', () => { state.products.push({ id: uid(), name: '', sku: '', cost: 0, price: 0, stock: 0 }); refresh(); });
-  $('#tblProducts')?.addEventListener('input', e => {
-    const el = e.target.closest('[data-pr-field]');
-    if (!el) return;
-    const p = state.products.find(x => x.id === el.dataset.id);
-    if (p) p[el.dataset.prField] = el.type === 'number' ? num(el.value) : el.value;
-    saveState();
   });
 
   $('#btnAddPartner')?.addEventListener('click', () => {
