@@ -1463,7 +1463,16 @@ async function showApp() {
   activeWorkspaceId = invite ? invite.owner_id : currentUser.id;
 
   // 2. Fetch the profile of the workspace we are trying to access
-  const workspaceProfile = await fetchProfile(activeWorkspaceId);
+  let workspaceProfile = await fetchProfile(activeWorkspaceId);
+  
+  // If profile doesn't exist, create a fallback so the app doesn't crash
+  if (!workspaceProfile) {
+    workspaceProfile = { 
+      payment_status: 'pending', 
+      subscription_end: null, 
+      company_name: 'New Organization' 
+    };
+  } ;
   currentUser.profile = workspaceProfile;
 
   // 3. Check Payment Status
