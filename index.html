@@ -3865,12 +3865,48 @@ function init() {
   $('#formInvite')?.addEventListener('submit', async e => {
     e.preventDefault();
     const email = e.target.email.value.trim().toLowerCase();
+    
+    // Check limits
     const { data: existing } = await supabase.from('workspace_members').select('id').eq('owner_id', activeWorkspaceId);
     if (existing && existing.length >= 30) return alert('Maximum limit of 30 collaborators reached.');
-    const { error } = await supabase.from('workspace_members').insert({ owner_id: activeWorkspaceId, member_email: email, status: 'pending' });
-    if (error) return alert('Error inviting: ' + error.message);
-    e.target.reset(); renderTeam();
-    alert('Invite created! The user will automatically join when they log in.');
+
+    const btn = e.target.querySelector('button[type="submit"]');
+    const origText = btn.textContent;
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+
+    try {
+      // 1. Save to Database
+      const { error } = await supabase.from('workspace_members').insert({ 
+        owner_id: activeWorkspaceId, 
+        member_email: email, 
+        status: 'pending' 
+      });
+      
+      if (error) throw new Error('Database error: ' + error.message);
+
+      // 2. Send Email via EmailJS
+      const templateParams = {
+        to_email: email,
+        inviter_name: currentUser.name || currentUser.email,
+        company_name: state.company.name,
+        invite_link: window.location.origin
+      };
+
+      // Replace with your actual Service ID and Template ID
+      await emailjs.send('service_gqu0nfk', 'template_q5abkfq', templateParams);
+
+      e.target.reset(); 
+      renderTeam();
+      alert('Invite sent successfully to ' + email);
+      
+    } catch (err) {
+      console.error(err);
+      alert('Error inviting: ' + err.message);
+    } finally {
+      btn.textContent = origText;
+      btn.disabled = false;
+    }
   });
 
   $('#btnAddProduct')?.addEventListener('click', () => { state.products.push({ id: uid(), name: '', sku: '', cost: 0, price: 0, stock: 0 }); refresh(); });
