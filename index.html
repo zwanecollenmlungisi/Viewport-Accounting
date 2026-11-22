@@ -2097,9 +2097,6 @@ function computeBalanceSheet() {
   };
 }
   
-  return { ppeNbv, otherNCA, inventory, receivables, cash, nonCurrentAssets, currentAssets, totalAssets, partnerCapital, openingRE, retainedEarnings, totalEquity, longTermLoans, tradePayables, vatPayable, taxPayable, currentLiabilities, totalLiabilities, totalEquityLiabilities, difference, deferredTax };
-}
-
 function dailyRows() {
   const map = new Map();
   const get = d => { if (!map.has(d)) map.set(d, { date: d, count: 0, income: 0, expense: 0 }); return map.get(d); };
