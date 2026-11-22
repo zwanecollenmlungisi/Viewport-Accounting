@@ -3555,6 +3555,11 @@ function buildPrintDoc() {
         ${days.length ? `<tr class="tot"><td>Total</td><td class="r">${dayTotals.count}</td><td class="r">${money(dayTotals.income)}</td><td class="r">${money(dayTotals.expense)}</td><td class="r">${money(dayTotals.income - dayTotals.expense)}</td></tr>` : ''}
       </tbody></table>
     </div>
+
+    <div class="section"><h2>Asset Register</h2>
+      <table><thead><tr><th>Asset</th><th>Category</th><th>Purchased</th><th class="r">Cost</th><th class="r">Life</th><th class="r">Accum. dep.</th><th class="r">Net book value</th></tr></thead>
+      <tbody>${assetRows || `<tr><td colspan="7">No assets.</td></tr>`}</tbody></table>
+    </div>
         <!-- PAGE BREAK FOR APPENDICES -->
     <div class="section" style="break-before: page; margin-top: 40px;">
       <h2 style="border-bottom: 2px solid #000; padding-bottom: 4px;">Appendix A: Management Schedules</h2>
@@ -3569,11 +3574,6 @@ function buildPrintDoc() {
       <tbody>${dayRows || `<tr><td colspan="5">No daily activity.</td></tr>`}
         ${days.length ? `<tr class="tot"><td>Total</td><td class="r">${dayTotals.count}</td><td class="r">${money(dayTotals.income)}</td><td class="r">${money(dayTotals.expense)}</td><td class="r">${money(dayTotals.income - dayTotals.expense)}</td></tr>` : ''}
       </tbody></table>
-    </div>
-
-    <div class="section"><h2>Asset Register</h2>
-      <table><thead><tr><th>Asset</th><th>Category</th><th>Purchased</th><th class="r">Cost</th><th class="r">Life</th><th class="r">Accum. dep.</th><th class="r">Net book value</th></tr></thead>
-      <tbody>${assetRows || `<tr><td colspan="7">No assets.</td></tr>`}</tbody></table>
     </div>
 
     ${partners.length ? `
