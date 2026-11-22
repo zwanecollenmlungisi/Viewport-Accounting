@@ -2037,39 +2037,65 @@ function computeBalanceSheet() {
   const p = P();
   const toDate = p.to;
   const c = compute();
-  const ppeNbv = state.assets.filter(a => a.date <= toDate && !a.sold).reduce((sum, a) => sum + nbvAsOf(a, toDate), 0);
+  
+  // 1. Assets
+  const ppeNbv = state.assets.filter(a => a.date <= toDate && !a.sold).reduce((sum, a) => sum + assetValuation(a, toDate).nbv, 0);
   const otherNCA = num(state.company.otherNonCurrentAssets);
   const inventory = num(state.company.inventory);
   const receivables = num(state.company.tradeReceivables);
-  const cash = c.closeCash;
+  
+  // Handle Negative Cash (Overdraft)
+  let cash = c.closeCash;
+  let overdraft = 0;
+  if (cash < 0) {
+    overdraft = Math.abs(cash);
+    cash = 0; 
+  }
+
   const nonCurrentAssets = ppeNbv + otherNCA;
   const currentAssets = inventory + receivables + cash;
   const totalAssets = nonCurrentAssets + currentAssets;
   
+  // 2. Equity
   const totalDrawings = (state.drawings || []).filter(d => !d.reversed && d.date <= toDate).reduce((a, b) => a + num(b.amount), 0);
   const partnerCapital = (state.partners || []).reduce((s, pr) => s + num(pr.capital), 0) - totalDrawings;
   
   const openingRE = num(state.company.openingRetainedEarnings);
   const retainedEarnings = openingRE + allTimeProfitToDate(toDate);
-  const totalEquity = partnerCapital + retainedEarnings;
+  let totalEquity = partnerCapital + retainedEarnings;
   
+  // 3. Liabilities
   const longTermLoans = num(state.company.longTermLoans);
   const tradePayables = num(state.company.tradePayables);
   
   const vatRate = num(state.company.vatRate) / 100;
   const vatFactor = state.company.vatInclusive ? 1 / (1 + vatRate) : 1;
+  const stdRev = state.incomes.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
+  const stdExp = state.expenses.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
   
-  const stdRevenue = state.incomes.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
-  const stdExpenses = state.expenses.filter(t => inP(t.date) && !t.reversed && t.vatCode === 'std').reduce((a,b)=>a+num(b.amount),0);
-  
-  const vatPayable = state.company.vatEnabled ? (stdRevenue * vatRate * vatFactor) - (stdExpenses * vatRate * vatFactor) : 0;
+  const vatPayable = state.company.vatEnabled ? (stdRev * vatRate * vatFactor) - (stdExp * vatRate * vatFactor) : 0;
   const taxPayable = c.tax;
   const deferredTax = num(state.company.deferredTax);
   
-  const currentLiabilities = tradePayables + Math.max(0, vatPayable) + Math.max(0, taxPayable);
+  const currentLiabilities = tradePayables + Math.max(0, vatPayable) + Math.max(0, taxPayable) + overdraft;
   const totalLiabilities = longTermLoans + currentLiabilities + deferredTax;
-  const totalEquityLiabilities = totalEquity + totalLiabilities;
-  const difference = totalAssets - totalEquityLiabilities;
+  
+  // 4. Suspense Account (Forces Balance)
+  let difference = totalAssets - (totalEquity + totalLiabilities);
+  let suspense = 0;
+  if (Math.abs(difference) > 0.01) {
+    suspense = difference; 
+    totalEquity += suspense; 
+    difference = 0; 
+  }
+  
+  return { 
+    ppeNbv, otherNCA, inventory, receivables, cash, overdraft, nonCurrentAssets, currentAssets, totalAssets, 
+    partnerCapital, openingRE, retainedEarnings, suspense, totalEquity, 
+    longTermLoans, tradePayables, vatPayable, taxPayable, currentLiabilities, totalLiabilities, deferredTax, 
+    totalEquityLiabilities: totalEquity + totalLiabilities, difference 
+  };
+}
   
   return { ppeNbv, otherNCA, inventory, receivables, cash, nonCurrentAssets, currentAssets, totalAssets, partnerCapital, openingRE, retainedEarnings, totalEquity, longTermLoans, tradePayables, vatPayable, taxPayable, currentLiabilities, totalLiabilities, totalEquityLiabilities, difference, deferredTax };
 }
@@ -2260,32 +2286,40 @@ function cashFlowRows(c) {
 }
 function balanceSheetRows(b) {
   const rows = [], add = (label, value, opt = {}) => rows.push({ label, value, ...opt });
+  
   add('Assets', null, { section: true });
   add('Non-current assets', null, { section: true });
   add('Property, plant and equipment', b.ppeNbv, { indent: true });
   if (b.otherNCA) add('Other non-current assets', b.otherNCA, { indent: true });
   add('Total non-current assets', b.nonCurrentAssets, { total: true, rule: true });
+  
   add('Current assets', null, { section: true });
   add('Inventories', b.inventory, { indent: true });
   add('Trade and other receivables', b.receivables, { indent: true });
   add('Cash and cash equivalents', b.cash, { indent: true });
   add('Total current assets', b.currentAssets, { total: true, rule: true });
   add('Total assets', b.totalAssets, { grand: true });
+  
   add(getTerm('equity') + ' and liabilities', null, { section: true });
   add(getTerm('equity'), null, { section: true });
   add(getTerm('capital'), b.partnerCapital, { indent: true });
   add(getTerm('retained'), b.retainedEarnings, { indent: true });
+  if (Math.abs(b.suspense) > 0.01) add('Suspense / Unreconciled', b.suspense, { indent: true });
   add('Total ' + getTerm('equity').toLowerCase(), b.totalEquity, { total: true, rule: true });
+  
   add('Liabilities', null, { section: true });
   add('Non-current liabilities', null, { section: true });
   add('Long-term borrowings', b.longTermLoans, { indent: true });
   if (b.deferredTax) add('Deferred tax', b.deferredTax, { indent: true });
   add('Total non-current liabilities', b.longTermLoans + b.deferredTax, { total: true, rule: true });
+  
   add('Current liabilities', null, { section: true });
   add('Trade and other payables', b.tradePayables, { indent: true });
   add('VAT payable', Math.max(0, b.vatPayable), { indent: true });
   add('Income tax payable', Math.max(0, b.taxPayable), { indent: true });
+  if (b.overdraft) add('Bank Overdraft', b.overdraft, { indent: true });
   add('Total current liabilities', b.currentLiabilities, { total: true, rule: true });
+  
   add('Total liabilities', b.totalLiabilities, { total: true, strong: true });
   add('Total ' + getTerm('equity').toLowerCase() + ' and liabilities', b.totalEquityLiabilities, { grand: true });
   return rows;
@@ -2641,10 +2675,12 @@ function renderPayroll() {
 }
 function delEmployee(id) { if (confirm('Remove employee?')) { state.employees = state.employees.filter(x => x.id !== id); refresh(); } }
 
-function assetValuation(a) {
+function assetValuation(a, asOfDate = todayISO()) {
   const cost = num(a.cost), salvage = num(a.salvage), life = num(a.life) || 1;
   const monthly = (cost - salvage) / (life * 12);
-  const elapsed = Math.max(0, monthsBetween(parseISO(a.date), new Date()));
+  const start = parseISO(a.date);
+  const ref = parseISO(asOfDate);
+  const elapsed = Math.max(0, monthsBetween(start, ref));
   const accum = Math.min(cost - salvage, Math.max(0, elapsed * monthly));
   return { monthly, accum, nbv: cost - accum };
 }
@@ -2815,26 +2851,28 @@ function renderBalanceSheet() {
 
 function renderTrialBalance() {
   const c = compute();
-  const bs = computeBalanceSheet();
+  const b = computeBalanceSheet();
   
   const tb = [
-    { code: '1000', name: 'Cash and Cash Equivalents', dr: bs.cash, cr: 0 },
-    { code: '1200', name: 'Trade Receivables (Debtors)', dr: bs.receivables, cr: 0 },
-    { code: '1300', name: 'Inventory', dr: bs.inventory, cr: 0 },
-    { code: '1500', name: 'Property, Plant & Equipment (Cost)', dr: state.assets.reduce((a,b)=>a+num(b.cost),0), cr: 0 },
-    { code: '1510', name: 'Accumulated Depreciation', dr: 0, cr: state.assets.reduce((a,b)=>a+assetValuation(b).accum,0) },
-    { code: '2000', name: 'Trade Payables (Creditors)', dr: 0, cr: bs.tradePayables },
-    { code: '2100', name: 'VAT Payable', dr: 0, cr: Math.max(0, bs.vatPayable) },
-    { code: '2200', name: 'Income Tax Payable', dr: 0, cr: Math.max(0, bs.taxPayable) },
-    { code: '2300', name: 'Deferred Tax Liability', dr: 0, cr: num(state.company.deferredTax) },
-    { code: '3000', name: getTerm('capital'), dr: 0, cr: bs.partnerCapital },
-    { code: '3100', name: getTerm('retained'), dr: 0, cr: bs.retainedEarnings },
+    { code: '1000', name: 'Cash and Cash Equivalents', dr: b.cash, cr: 0 },
+    { code: '1200', name: 'Trade Receivables (Debtors)', dr: b.receivables, cr: 0 },
+    { code: '1300', name: 'Inventory', dr: b.inventory, cr: 0 },
+    { code: '1500', name: 'Property, Plant & Equipment (Cost)', dr: state.assets.filter(a=>!a.sold).reduce((a,b)=>a+num(b.cost),0), cr: 0 },
+    { code: '1510', name: 'Accumulated Depreciation', dr: 0, cr: state.assets.filter(a=>!a.sold).reduce((a,b)=>a+assetValuation(b, P().to).accum,0) },
+    { code: '2000', name: 'Trade Payables (Creditors)', dr: 0, cr: b.tradePayables },
+    { code: '2100', name: 'VAT Payable', dr: 0, cr: Math.max(0, b.vatPayable) },
+    { code: '2200', name: 'Income Tax Payable', dr: 0, cr: Math.max(0, b.taxPayable) },
+    { code: '2300', name: 'Deferred Tax Liability', dr: 0, cr: b.deferredTax },
+    { code: '2400', name: 'Bank Overdraft', dr: 0, cr: b.overdraft },
+    { code: '3000', name: getTerm('capital'), dr: 0, cr: b.partnerCapital },
+    { code: '3100', name: getTerm('retained'), dr: 0, cr: b.retainedEarnings },
+    { code: '3900', name: 'Suspense / Unreconciled', dr: 0, cr: b.suspense },
     { code: '4000', name: 'Revenue / Income', dr: 0, cr: c.revenue },
     { code: '5000', name: 'Cost of Sales', dr: c.cogs, cr: 0 },
     { code: '6000', name: 'Operating Expenses', dr: c.opex, cr: 0 },
     { code: '7000', name: 'Depreciation Expense', dr: c.dep, cr: 0 },
     { code: '8000', name: 'Taxation Expense', dr: c.tax, cr: 0 }
-  ];
+  ].filter(row => row.dr !== 0 || row.cr !== 0); 
 
   const totalDr = tb.reduce((a, b) => a + b.dr, 0);
   const totalCr = tb.reduce((a, b) => a + b.cr, 0);
@@ -3476,7 +3514,7 @@ function buildPrintDoc() {
     : `Figures are management estimates and have not been audited or independently verified.`;
 
   const assetRows = state.assets.filter(a => !a.sold).slice().sort((a, b) => a.date.localeCompare(b.date)).map(a => {
-    const v = assetValuation(a);
+    const v = assetValuation(a, p.to); 
     return `<tr><td>${esc(a.name)}</td><td>${esc(a.category)}</td><td>${fmtDate(a.date)}</td><td class="r">${money(a.cost)}</td><td class="r">${num(a.life)} yr</td><td class="r">${money(v.accum)}</td><td class="r">${money(v.nbv)}</td></tr>`;
   }).join('');
   
@@ -3574,23 +3612,27 @@ function buildPrintDoc() {
     
     ${renderReconciliation()}
 
-    <div class="section"><h2>Monthly Performance Summary</h2>
-      <table><thead><tr><th>Month</th><th class="r">Receipts</th><th class="r">Income</th><th class="r">Expenses</th><th class="r">Net cash</th><th class="r">Cumulative</th></tr></thead>
-      <tbody>${monthRows || `<tr><td colspan="6">No monthly activity.</td></tr>`}</tbody></table>
+    <div class="section" style="break-before: page;">
+      <h2>Notes to the Financial Statements</h2>
+      <h3>1. Basis of Preparation</h3>
+      <p style="font-size: 11px; line-height: 1.5;">The financial statements have been prepared in accordance with the International Financial Reporting Standard for Small and Medium-sized Entities (IFRS for SMEs). The financial statements are prepared on the historical cost basis and incorporate the principal accounting policies set out below.</p>
+      <h3>2. Property, Plant and Equipment</h3>
+      <p style="font-size: 11px; line-height: 1.5;">Property, plant and equipment are stated at cost less accumulated depreciation. Depreciation is calculated on the straight-line basis over the estimated useful lives of the assets.</p>
+      <table style="margin-top: 8px;">
+        <thead><tr><th>Asset</th><th class="r">Opening Cost</th><th class="r">Additions</th><th class="r">Accum. Dep.</th><th class="r">Net Book Value</th></tr></thead>
+        <tbody>
+          ${state.assets.filter(a => !a.sold).map(a => {
+            const v = assetValuation(a, p.to); 
+            return `<tr><td>${esc(a.name)}</td><td class="r">${money(a.cost)}</td><td class="r">—</td><td class="r">${money(v.accum)}</td><td class="r">${money(v.nbv)}</td></tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+      <h3>3. Taxation</h3>
+      <p style="font-size: 11px; line-height: 1.5;">Current tax is provided for at the current tax rates applicable in South Africa. ${state.company.sbcEnabled ? 'The company qualifies as a Small Business Corporation and is taxed on the sliding scale.' : 'The company is taxed at the standard flat rate.'} Deferred tax is provided for on temporary differences.</p>
+      <h3>4. Going Concern</h3>
+      <p style="font-size: 11px; line-height: 1.5;">The financial statements have been prepared on the going concern basis. The management has every reason to believe that the organization has adequate resources to continue in operational existence for the foreseeable future.</p>
     </div>
 
-    <div class="section"><h2>Daily Sales / Income Received</h2>
-      <table><thead><tr><th>Date</th><th class="r">Receipts</th><th class="r">Income</th><th class="r">Expenses</th><th class="r">Net cash for day</th></tr></thead>
-      <tbody>${dayRows || `<tr><td colspan="5">No daily activity.</td></tr>`}
-        ${days.length ? `<tr class="tot"><td>Total</td><td class="r">${dayTotals.count}</td><td class="r">${money(dayTotals.income)}</td><td class="r">${money(dayTotals.expense)}</td><td class="r">${money(dayTotals.income - dayTotals.expense)}</td></tr>` : ''}
-      </tbody></table>
-    </div>
-
-    <div class="section"><h2>Asset Register</h2>
-      <table><thead><tr><th>Asset</th><th>Category</th><th>Purchased</th><th class="r">Cost</th><th class="r">Life</th><th class="r">Accum. dep.</th><th class="r">Net book value</th></tr></thead>
-      <tbody>${assetRows || `<tr><td colspan="7">No assets.</td></tr>`}</tbody></table>
-    </div>
-        <!-- PAGE BREAK FOR APPENDICES -->
     <div class="section" style="break-before: page; margin-top: 40px;">
       <h2 style="border-bottom: 2px solid #000; padding-bottom: 4px;">Appendix A: Management Schedules</h2>
       <p style="font-size: 10px; color: #555; margin-bottom: 20px;">The following schedules are for management purposes and do not form part of the statutory financial statements.</p>
@@ -3604,99 +3646,6 @@ function buildPrintDoc() {
       <tbody>${dayRows || `<tr><td colspan="5">No daily activity.</td></tr>`}
         ${days.length ? `<tr class="tot"><td>Total</td><td class="r">${dayTotals.count}</td><td class="r">${money(dayTotals.income)}</td><td class="r">${money(dayTotals.expense)}</td><td class="r">${money(dayTotals.income - dayTotals.expense)}</td></tr>` : ''}
       </tbody></table>
-    </div>
-
-    ${partners.length ? `
-    <div class="section">
-      <h2>Partners &amp; Partner Agreements</h2>
-      <table>
-        <thead><tr><th>Name</th><th>ID / passport</th><th class="r">Ownership</th><th class="r">Capital</th><th>Role</th><th>Agreement date</th><th>Agreement ref.</th><th>Phone</th><th>Email</th><th>Notes</th></tr></thead>
-        <tbody>${partners.map(pr => `<tr><td>${esc(pr.name)}</td><td>${esc(pr.idNumber || '—')}</td><td class="r">${num(pr.ownership).toFixed(1)}%</td><td class="r">${money(pr.capital || 0)}</td><td>${esc(pr.role || '—')}</td><td>${esc(pr.agreementDate ? fmtDate(pr.agreementDate) : '—')}</td><td>${esc(pr.agreementRef || '—')}</td><td>${esc(pr.phone || '—')}</td><td>${esc(pr.email || '—')}</td><td>${esc(pr.notes || '')}</td></tr>`).join('')}</tbody>
-        <tfoot><tr><td colspan="2" style="text-align:right;font-weight:700;border-top:1px solid #000">Total</td><td class="r" style="font-weight:700;border-top:1px solid #000">${ownership.toFixed(1)}%</td><td class="r" style="font-weight:700;border-top:1px solid #000">${money0(totalCapital)}</td><td colspan="6" style="border-top:1px solid #000"></td></tr></tfoot>
-      </table>
-    </div>` : ''}
-
-    ${suppliers.length ? `
-    <div class="section">
-      <h2>Suppliers &amp; Service Providers</h2>
-      <table>
-        <thead><tr><th>Name</th><th>Category</th><th>Contact</th><th>Phone</th><th>Email</th><th>VAT no.</th><th>Payment terms</th><th>Bank details</th></tr></thead>
-        <tbody>${suppliers.map(su => `<tr><td>${esc(su.name)}</td><td>${esc(su.category || '—')}</td><td>${esc(su.contact || '—')}</td><td>${esc(su.phone || '—')}</td><td>${esc(su.email || '—')}</td><td>${esc(su.vatNo || '—')}</td><td>${esc(su.terms || '—')}</td><td>${esc(su.bankDetails || '—')}</td></tr>`).join('')}</tbody>
-      </table>
-    </div>` : ''}
-
-    ${(state.bills && state.bills.length) ? `
-    <div class="section">
-      <h2>Supplier Bills (Creditors)</h2>
-      <table><thead><tr><th>Bill #</th><th>Supplier</th><th>Date</th><th>Due</th><th class="r">Amount</th><th>Status</th></tr></thead>
-      <tbody>${state.bills.sort((a,b) => a.date.localeCompare(b.date)).map(b => `<tr><td>${esc(b.billNo)}</td><td>${esc(b.supplier)}</td><td>${fmtDate(b.date)}</td><td>${fmtDate(b.dueDate)}</td><td class="r">${money(b.amount)}</td><td>${b.status}</td></tr>`).join('')}</tbody>
-      <tfoot><tr class="tot"><td colspan="4" style="text-align:right">Total Outstanding</td><td class="r">${money(state.bills.filter(b => b.status === 'Unpaid').reduce((a, b) => a + num(b.amount), 0))}</td><td></td></tr></tfoot>
-      </table>
-    </div>` : ''}
-
-    ${empCalcs.length ? `
-    <div class="section">
-      <h2>Payroll &amp; EMP201 Summary</h2>
-      <table><thead><tr><th>Emp No.</th><th>Employee</th><th>ID Number</th><th>Contact</th><th class="r">Gross</th><th class="r">PAYE</th><th class="r">UIF</th><th class="r">Net Pay</th></tr></thead>
-      <tbody>${empCalcs.map(e => `<tr><td>${esc(e.empNo || '—')}</td><td>${esc(e.name)}</td><td>${esc(e.idNumber)}</td><td>${esc(e.phone || e.email || '—')}</td><td class="r">${money(e.gross)}</td><td class="r">${money(e.paye)}</td><td class="r">${money(e.uif)}</td><td class="r">${money(e.net)}</td></tr>`).join('')}</tbody></table>
-      <h3 style="margin-top:16px;font-size:11px;text-transform:uppercase;letter-spacing:.08em">EMP201 Return Summary</h3>
-      <table><tbody>
-        <tr><td>Total PAYE</td><td class="r">${money(totalPaye)}</td></tr>
-        <tr><td>Total UIF (Employee + Employer)</td><td class="r">${money(totalUifEmp + totalUifCo)}</td></tr>
-        <tr><td>Total SDL</td><td class="r">${money(totalSdl)}</td></tr>
-        <tr class="tot"><td>Total Due to SARS</td><td class="r">${money(totalPaye + totalUifEmp + totalUifCo + totalSdl)}</td></tr>
-      </tbody></table>
-    </div>
-    <div class="section">
-      <h2>Employee Payslips</h2>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        ${empCalcs.map(e => `
-          <div style="border:1px solid #999;border-radius:5px;padding:12px;font-size:10.5px;break-inside:avoid">
-            <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:8px"><strong>${esc(co.name || 'Company')}</strong><br>Payslip: ${new Date().toLocaleString('en-ZA', { month: 'long', year: 'numeric' })}</div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:9.5px;color:#444"><span>Emp No: <b>${esc(e.empNo || '—')}</b></span><span>Contact: ${esc(e.phone || e.email || '—')}</span></div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span>Name: <b>${esc(e.name)}</b></span><span>ID: ${esc(e.idNumber)}</span></div>
-            <table style="font-size:10.5px"><tbody>
-              <tr><td>Gross Salary</td><td class="r">${money(e.gross)}</td></tr>
-              <tr><td>PAYE</td><td class="r">-${money(e.paye)}</td></tr>
-              <tr><td>UIF (1%)</td><td class="r">-${money(e.uif)}</td></tr>
-              <tr class="tot"><td>Net Pay</td><td class="r">${money(e.net)}</td></tr>
-            </tbody></table>
-            <div style="text-align:center;font-size:9px;color:#555;margin-top:8px">Co. UIF: ${money(e.uif)} | SDL: ${money(e.sdl)}</div>
-          </div>
-        `).join('')}
-      </div>
-    </div>` : ''}
-
-    <div class="section"><h2>Tax Summary</h2>
-      <table><tbody>
-        ${co.vatEnabled ? `<tr><td>Output VAT collected (${num(co.vatRate).toFixed(1)}%)</td><td class="r">${money(vatCollected)}</td></tr><tr><td>Input VAT paid (${num(co.vatRate).toFixed(1)}%)</td><td class="r">−${money(vatPaid)}</td></tr><tr class="tot"><td>Net VAT payable / (refundable)</td><td class="r">${money(vatCollected - vatPaid)}</td></tr>` : ''}
-        <tr><td>Taxable profit (EBIT)</td><td class="r">${money(taxable)}</td></tr>
-        <tr><td>Method</td><td class="r">${isNonProfit ? 'Tax Exempt (S10)' : co.sbcEnabled ? 'SBC sliding scale' : 'Flat rate ' + num(co.incomeTaxRate).toFixed(1) + '%'}</td></tr>
-        ${!isNonProfit && co.sbcEnabled && bands.length ? bands.map(band => `<tr><td style="padding-left:16px">${band.label} @ ${band.rate.toFixed(0)}% on ${money(band.base)}</td><td class="r">${money(band.tax)}</td></tr>`).join('') : ''}
-        <tr class="tot"><td>Estimated normal tax</td><td class="r">${money(c.tax)}</td></tr>
-        <tr class="tot"><td>Profit for the period after tax</td><td class="r">${money(c.net)}</td></tr>
-      </tbody></table>
-    </div>
-
-    <div class="section" style="break-before: page;">
-      <h2>Notes to the Financial Statements</h2>
-      <h3>1. Basis of Preparation</h3>
-      <p style="font-size: 11px; line-height: 1.5;">The financial statements have been prepared in accordance with the International Financial Reporting Standard for Small and Medium-sized Entities (IFRS for SMEs). The financial statements are prepared on the historical cost basis and incorporate the principal accounting policies set out below.</p>
-      <h3>2. Property, Plant and Equipment</h3>
-      <p style="font-size: 11px; line-height: 1.5;">Property, plant and equipment are stated at cost less accumulated depreciation. Depreciation is calculated on the straight-line basis over the estimated useful lives of the assets.</p>
-      <table style="margin-top: 8px;">
-        <thead><tr><th>Asset</th><th class="r">Opening Cost</th><th class="r">Additions</th><th class="r">Accum. Dep.</th><th class="r">Net Book Value</th></tr></thead>
-        <tbody>
-          ${state.assets.filter(a => !a.sold).map(a => {
-            const v = assetValuation(a);
-            return `<tr><td>${esc(a.name)}</td><td class="r">${money(a.cost)}</td><td class="r">—</td><td class="r">${money(v.accum)}</td><td class="r">${money(v.nbv)}</td></tr>`;
-          }).join('')}
-        </tbody>
-      </table>
-      <h3>3. Taxation</h3>
-      <p style="font-size: 11px; line-height: 1.5;">Current tax is provided for at the current tax rates applicable in South Africa. ${state.company.sbcEnabled ? 'The company qualifies as a Small Business Corporation and is taxed on the sliding scale.' : 'The company is taxed at the standard flat rate.'} Deferred tax is provided for on temporary differences.</p>
-      <h3>4. Going Concern</h3>
-      <p style="font-size: 11px; line-height: 1.5;">The financial statements have been prepared on the going concern basis. The management has every reason to believe that the organization has adequate resources to continue in operational existence for the foreseeable future.</p>
     </div>
 
     ${(co.accName && co.accFirm) ? `
