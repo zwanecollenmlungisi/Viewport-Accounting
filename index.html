@@ -3555,6 +3555,21 @@ function buildPrintDoc() {
         ${days.length ? `<tr class="tot"><td>Total</td><td class="r">${dayTotals.count}</td><td class="r">${money(dayTotals.income)}</td><td class="r">${money(dayTotals.expense)}</td><td class="r">${money(dayTotals.income - dayTotals.expense)}</td></tr>` : ''}
       </tbody></table>
     </div>
+        <!-- PAGE BREAK FOR APPENDICES -->
+    <div class="section" style="break-before: page; margin-top: 40px;">
+      <h2 style="border-bottom: 2px solid #000; padding-bottom: 4px;">Appendix A: Management Schedules</h2>
+      <p style="font-size: 10px; color: #555; margin-bottom: 20px;">The following schedules are for management purposes and do not form part of the statutory financial statements.</p>
+
+      <h3 style="font-size: 12px; text-transform: uppercase; margin-top: 20px;">Monthly Performance Summary</h3>
+      <table style="font-size: 10px;"><thead><tr><th>Month</th><th class="r">Receipts</th><th class="r">Income</th><th class="r">Expenses</th><th class="r">Net cash</th><th class="r">Cumulative</th></tr></thead>
+      <tbody>${monthRows || `<tr><td colspan="6">No monthly activity.</td></tr>`}</tbody></table>
+
+      <h3 style="font-size: 12px; text-transform: uppercase; margin-top: 30px;">Daily Sales / Income Received</h3>
+      <table style="font-size: 10px;"><thead><tr><th>Date</th><th class="r">Receipts</th><th class="r">Income</th><th class="r">Expenses</th><th class="r">Net cash for day</th></tr></thead>
+      <tbody>${dayRows || `<tr><td colspan="5">No daily activity.</td></tr>`}
+        ${days.length ? `<tr class="tot"><td>Total</td><td class="r">${dayTotals.count}</td><td class="r">${money(dayTotals.income)}</td><td class="r">${money(dayTotals.expense)}</td><td class="r">${money(dayTotals.income - dayTotals.expense)}</td></tr>` : ''}
+      </tbody></table>
+    </div>
 
     <div class="section"><h2>Asset Register</h2>
       <table><thead><tr><th>Asset</th><th>Category</th><th>Purchased</th><th class="r">Cost</th><th class="r">Life</th><th class="r">Accum. dep.</th><th class="r">Net book value</th></tr></thead>
