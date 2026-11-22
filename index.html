@@ -3217,7 +3217,7 @@ window.processImport = function() {
   const amt2Col = $('#mapAmount2') ? $('#mapAmount2').value : '';
   const typeMode = $('#mapType').value;
   
-  let inc = 0, exp = 0;
+    let inc = 0, exp = 0, skipped = 0;
   
   csvData.forEach(row => {
     const d = parseBankDate(row[dateCol]);
@@ -3255,12 +3255,37 @@ window.processImport = function() {
         newTx.category = 'Bank Charges';
         newTx.desc = 'Bank Fee: ' + newTx.desc;
       }
-      state.expenses.push(newTx); 
-      exp++; 
-    } else { 
-      state.incomes.push(newTx); 
-      inc++; 
-    }
+      // --- DUPLICATE CHECK LOGIC ---
+      let isDuplicate = false;
+      
+      if (isExp) {
+        // Check if this expense already exists
+        isDuplicate = state.expenses.some(existing => 
+          existing.date === newTx.date && 
+          Math.abs(num(existing.amount) - num(newTx.amount)) < 0.01 && 
+          !existing.reversed
+        );
+      } else {
+        // Check if this income already exists
+        isDuplicate = state.incomes.some(existing => 
+          existing.date === newTx.date && 
+          Math.abs(num(existing.amount) - num(newTx.amount)) < 0.01 && 
+          !existing.reversed
+        );
+      }
+
+      if (isDuplicate) {
+        skipped++; // We will track how many we skip
+      } else {
+        if (isExp) { 
+          state.expenses.push(newTx); 
+          exp++; 
+        } else { 
+          state.incomes.push(newTx); 
+          inc++; 
+        }
+      }
+      // --- END DUPLICATE CHECK ---
   });
 
   if (inc === 0 && exp === 0) return alert('No valid transactions found.');
