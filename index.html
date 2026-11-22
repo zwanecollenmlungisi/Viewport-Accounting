@@ -3862,19 +3862,6 @@ function init() {
     $('#topCoName').textContent = state.company.name || 'Your Organization';
   });
 
-  $('#formInvite')?.addEventListener('submit', async e => {
-    e.preventDefault();
-    const email = e.target.email.value.trim().toLowerCase();
-    
-    // Check limits
-    const { data: existing } = await supabase.from('workspace_members').select('id').eq('owner_id', activeWorkspaceId);
-    if (existing && existing.length >= 30) return alert('Maximum limit of 30 collaborators reached.');
-
-    const btn = e.target.querySelector('button[type="submit"]');
-    const origText = btn.textContent;
-    btn.textContent = 'Sending...';
-    btn.disabled = true;
-
     try {
       // 1. Save to Database
       const { error } = await supabase.from('workspace_members').insert({ 
@@ -3885,16 +3872,26 @@ function init() {
       
       if (error) throw new Error('Database error: ' + error.message);
 
-      // 2. Send Email via EmailJS
+      // 2. Send Email via Google Apps Script
       const templateParams = {
         to_email: email,
         inviter_name: currentUser.name || currentUser.email,
-        company_name: state.company.name,
+        company_name: state.company.name || 'Viewport Accounting',
         invite_link: window.location.origin
       };
 
-      // Replace with your actual Service ID and Template ID
-      await emailjs.send('service_1akd0q9', 'template_q5abkfq', templateParams);
+      // PASTE YOUR GOOGLE APPS SCRIPT URL HERE
+      const GAS_URL = 'https://script.google.com/macros/s/AKfycbz4sCBjfyptjH7pynqHcEhcDriMTqoOiDXPutY2h0JgsiXAr0qRQaMpM1AN0b-2K-kO/exec'; 
+
+      const response = await fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify(templateParams)
+      });
+
+      const result = await response.json();
+      if (result.result !== 'success') {
+        throw new Error(result.error || 'Failed to send email');
+      }
 
       e.target.reset(); 
       renderTeam();
@@ -3907,7 +3904,6 @@ function init() {
       btn.textContent = origText;
       btn.disabled = false;
     }
-  });
 
   $('#btnAddProduct')?.addEventListener('click', () => { state.products.push({ id: uid(), name: '', sku: '', cost: 0, price: 0, stock: 0 }); refresh(); });
   $('#tblProducts')?.addEventListener('input', e => {
