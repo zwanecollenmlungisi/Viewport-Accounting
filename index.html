@@ -3292,7 +3292,11 @@ window.processImport = function() {
   
   addAuditLog('Imported CSV', `Added ${inc} incomes and ${exp} expenses.`);
   refresh();
-  alert(`Import Complete!\nAdded ${inc} incomes and ${exp} expenses.`);
+  let msg = `Import Complete!\n\n✅ Added: ${inc} incomes, ${exp} expenses.`;
+  if (skipped > 0) {
+    msg += `\n\n⚠️ Skipped: ${skipped} duplicate transactions (matching date & amount).`;
+  }
+  alert(msg);
   cancelImport();
 };
 
