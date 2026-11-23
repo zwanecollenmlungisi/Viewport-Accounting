@@ -1447,11 +1447,54 @@ function setAuthMode(mode) {
   $$('.fld').forEach(f => f.classList.remove('bad'));
 }
 async function showApp() {
+  // =======================================================
+  // 1. CHECK IF RETURNING FROM YOCO PAYMENT (The Waiting Room)
+  // =======================================================
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('payment') === 'success') {
+    $('#boot').style.display = 'none';
+    $('#site').style.display = 'none';
+    $('#app').style.display = 'none';
+    $('#payment-screen').style.display = 'flex';
+    $('#payment-screen').innerHTML = `
+      <div style="text-align:center; padding: 40px;">
+        <div class="spin" style="width:40px; height:40px; border:4px solid #e2e8f0; border-top-color:#007a4d; border-radius:50%; animation:spin 1s linear infinite; margin: 0 auto 20px;"></div>
+        <h2 style="color:#0f172a; margin-bottom:10px;">Confirming Payment...</h2>
+        <p style="color:#64748b;">Please wait while we verify your transaction with Yoco.</p>
+      </div>
+    `;
+
+    let attempts = 0;
+    const pollPayment = setInterval(async () => {
+      const profile = await fetchProfile(currentUser.id);
+      
+      if (profile && profile.payment_status === 'paid') {
+        clearInterval(pollPayment);
+        currentUser.profile = profile;
+        window.history.replaceState({}, document.title, window.location.pathname); // Clean URL
+        alert('Payment successful! Welcome to Viewport Accounting.');
+        showApp(); // Re-run showApp now that they are paid
+        return;
+      }
+      
+      attempts++;
+      if (attempts > 10) { // Timeout after 20 seconds
+        clearInterval(pollPayment);
+        alert('Payment is still processing. Please refresh the page in a few minutes.');
+        logout();
+      }
+    }, 2000); 
+
+    return; // STOP HERE while polling. Do not load the dashboard yet.
+  }
+
+  // =======================================================
+  // 2. NORMAL LOGIN FLOW (Checking roles and paywall)
+  // =======================================================
   $('#boot').style.display = 'none';
   $('#site').style.display = 'none';
   $('#app').style.display = 'none';
 
-  // 1. Check if this user is an invited team member
   const { data: invite } = await supabase
     .from('workspace_members')
     .select('owner_id')
@@ -1459,17 +1502,14 @@ async function showApp() {
     .eq('status', 'active')
     .maybeSingle();
 
-  // 2. Determine if Owner or Collaborator
   let isOwner = true;
   activeWorkspaceId = currentUser.id;
 
-  // Only treat them as a collaborator if the invite is for a DIFFERENT user's workspace
   if (invite && invite.owner_id !== currentUser.id) {
     isOwner = false;
     activeWorkspaceId = invite.owner_id;
   }
 
-  // 3. Fetch the workspace profile
   let workspaceProfile = await fetchProfile(activeWorkspaceId);
   
   if (!workspaceProfile) {
@@ -1477,22 +1517,23 @@ async function showApp() {
   }
   currentUser.profile = workspaceProfile;
 
-  // 4. Check Payment Status
   const subEnd = workspaceProfile.subscription_end ? parseISO(workspaceProfile.subscription_end) : null;
   const today = parseISO(todayISO());
   const isPaid = workspaceProfile.payment_status === 'paid' && subEnd && subEnd >= today;
 
-  // 5. Enforce the Paywall
+  // Enforce the Paywall
   if (!isPaid && isOwner) {
+    // Owner hasn't paid: Show lock screen
     $('#payment-screen').style.display = 'flex';
     return;
   } else if (!isPaid && !isOwner) {
+    // Collaborator trying to access an unpaid workspace
     alert('Access denied. The workspace owner has not paid for a subscription.');
     logout();
     return;
   }
 
-  // 6. Success
+  // 3. Success - Load the app
   $('#payment-screen').style.display = 'none';
   $('#app').style.display = 'block';
   updateUserChip();
