@@ -1520,6 +1520,7 @@ async function showApp() {
   const subEnd = workspaceProfile.subscription_end ? parseISO(workspaceProfile.subscription_end) : null;
   const today = parseISO(todayISO());
   const isPaid = workspaceProfile.payment_status === 'paid' && subEnd && subEnd >= today;
+  console.log("PAYWALL CHECK:", { isOwner, status: workspaceProfile.payment_status, subEnd, isPaid });
 
   // Enforce the Paywall
   if (!isPaid && isOwner) {
