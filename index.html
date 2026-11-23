@@ -1776,10 +1776,7 @@ async function logout() {
   try {
     await supabase.auth.signOut({ scope: 'local' });
   } catch (err) {
-    // Ignore errors. We are already logged out on the frontend.
-     // Ignore 403 errors here. It just means the session was already invalid.
-    // The important part is that we continue to clear the local UI.
-    console.warn('Supabase signOut failed (likely session already expired):', err.message);
+    
   }
 
   // --- This block ensures the user is logged out locally regardless of server response ---
