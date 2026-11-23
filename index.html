@@ -1692,47 +1692,27 @@ async function doLogin(e) {
   }
 }
 
-  async function simulateYocoPayment() {
+async function redirectToYoco(event) {
   const btn = event.target;
   const origText = btn.textContent;
-  btn.textContent = 'Processing Payment...';
+  btn.textContent = 'Connecting to Yoco...';
   btn.disabled = true;
 
   try {
-    // In the future, this will redirect to the Yoco Edge Function link.
-    // For now, we simulate a successful webhook by updating the database directly.
+    // 1. Call your Supabase Edge Function to create a Yoco Checkout link
+    const { data, error } = await supabase.functions.invoke('yoco-create-checkout');
     
-    const start = todayISO();
-    const end = addMonths(start, 12);
-    const reference = 'SIM-' + Date.now().toString(36).toUpperCase();
-
-    const { error } = await supabase.from('profiles').update({
-      payment_status: 'paid',
-      subscription_start: start,
-      subscription_end: end,
-      subscription_amount: 4850,
-      subscription_reference: reference
-    }).eq('id', currentUser.id);
-
     if (error) throw error;
-
-    // Update local state
-    currentUser.profile.payment_status = 'paid';
-    currentUser.profile.subscription_start = start;
-    currentUser.profile.subscription_end = end;
-    currentUser.subscription = { plan: 'annual', amount: 4850, start, end, reference, renewals: [] };
-
-    alert('Payment successful! Welcome to Viewport Accounting.');
     
-    // Load the app
-    $('#payment-screen').style.display = 'none';
-    $('#app').style.display = 'block';
-    bootApp();
-
+    if (data && data.redirectUrl) {
+      // 2. Redirect the user to the actual Yoco payment page
+      window.location.href = data.redirectUrl;
+    } else {
+      throw new Error("No redirect URL received from the server.");
+    }
   } catch (err) {
-    console.error(err);
-    alert('Payment failed: ' + err.message);
-  } finally {
+    console.error("Yoco Redirect Error:", err);
+    alert("Could not connect to Yoco. Please ensure the payment gateway is configured.\n\nError: " + err.message);
     btn.textContent = origText;
     btn.disabled = false;
   }
