@@ -1459,40 +1459,40 @@ async function showApp() {
     .eq('status', 'active')
     .maybeSingle();
 
-  const isOwner = !invite;
-  activeWorkspaceId = invite ? invite.owner_id : currentUser.id;
+  // 2. Determine if Owner or Collaborator
+  let isOwner = true;
+  activeWorkspaceId = currentUser.id;
 
-  // 2. Fetch the profile of the workspace we are trying to access
+  // Only treat them as a collaborator if the invite is for a DIFFERENT user's workspace
+  if (invite && invite.owner_id !== currentUser.id) {
+    isOwner = false;
+    activeWorkspaceId = invite.owner_id;
+  }
+
+  // 3. Fetch the workspace profile
   let workspaceProfile = await fetchProfile(activeWorkspaceId);
   
-  // If profile doesn't exist, create a fallback so the app doesn't crash
   if (!workspaceProfile) {
-    workspaceProfile = { 
-      payment_status: 'pending', 
-      subscription_end: null, 
-      company_name: 'New Organization' 
-    };
-  } ;
+    workspaceProfile = { payment_status: 'pending', subscription_end: null, company_name: 'New Organization' };
+  }
   currentUser.profile = workspaceProfile;
 
-  // 3. Check Payment Status
+  // 4. Check Payment Status
   const subEnd = workspaceProfile.subscription_end ? parseISO(workspaceProfile.subscription_end) : null;
   const today = parseISO(todayISO());
   const isPaid = workspaceProfile.payment_status === 'paid' && subEnd && subEnd >= today;
 
-  // 4. Enforce the Paywall
+  // 5. Enforce the Paywall
   if (!isPaid && isOwner) {
-    // Owner hasn't paid: Show lock screen
     $('#payment-screen').style.display = 'flex';
     return;
   } else if (!isPaid && !isOwner) {
-    // Collaborator trying to access an unpaid workspace
     alert('Access denied. The workspace owner has not paid for a subscription.');
     logout();
     return;
   }
 
-  // 5. If they passed the check, show the app
+  // 6. Success
   $('#payment-screen').style.display = 'none';
   $('#app').style.display = 'block';
   updateUserChip();
