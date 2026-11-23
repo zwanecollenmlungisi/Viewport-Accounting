@@ -1760,20 +1760,25 @@ async function redirectToYoco(event) {
   }
 }
 async function logout() {
-  try {
-    // Attempt to save any pending data before logging out
-    await flushSave();
-    clearTimeout(profileSaveTimer);
-    await pushProfileToSupabase();
-  } catch (err) {
-    console.error('Error flushing data on logout:', err);
-  }
+  // 1. Clear local UI IMMEDIATELY (Hides the app)
+  if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+  currentUser = null; state = null; booted = false; activeWorkspaceId = null;
+  clearTimeout(saveTimer); clearTimeout(profileSaveTimer);
+  
+  ['#formIncome', '#formExpense', '#formAsset'].forEach(sel => { 
+    const f = $(sel); if (f) f.reset(); 
+  });
+  $$('.fld').forEach(f => f.classList.remove('bad'));
+  clearAlert();
+  showLanding();
 
+  // 2. Tell Supabase to clear ONLY the local session in the background
   try {
-    // Attempt to sign out from Supabase
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: 'local' });
   } catch (err) {
-    // Ignore 403 errors here. It just means the session was already invalid.
+    // Ignore errors. We are already logged out on the frontend.
+  }
+ // Ignore 403 errors here. It just means the session was already invalid.
     // The important part is that we continue to clear the local UI.
     console.warn('Supabase signOut failed (likely session already expired):', err.message);
   }
