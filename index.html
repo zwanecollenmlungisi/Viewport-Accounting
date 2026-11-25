@@ -1744,7 +1744,9 @@ async function redirectToYoco(event) {
     // 1. Call your Supabase Edge Function to create a Yoco Checkout link
         // We pass the user ID so the function knows who is making the payment
     const { data, error } = await supabase.functions.invoke('yoco-create-checkout', {
-      body: { userId: currentUser.id , origin: window.location.origon}
+      body: { 
+            userId: currentUser.id,
+            origin: window.location.origin }
     });
     
     if (error) throw error;
