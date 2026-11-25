@@ -1740,29 +1740,70 @@ async function redirectToYoco(event) {
   btn.textContent = 'Connecting to Yoco...';
   btn.disabled = true;
 
-  try {
-    // 1. Call your Supabase Edge Function to create a Yoco Checkout link
-        // We pass the user ID so the function knows who is making the payment
-    const { data, error } = await supabase.functions.invoke('yoco-create-checkout', {
-      body: { 
-            userId: currentUser.id,
-            origin: window.location.origin }
-    });
-    
-    if (error) throw error;
-    
-    if (data && data.redirectUrl) {
-      // 2. Redirect the user to the actual Yoco payment page
-      window.location.href = data.redirectUrl;
-    } else {
-      throw new Error("No redirect URL received from the server.");
+  // Helper to handle the actual payment logic
+  const proceedWithPayment = async (user) => {
+    if (!user) {
+      throw new Error("No user is currently logged in.");
     }
-  } catch (err) {
-    console.error("Yoco Redirect Error:", err);
-    alert("Could not connect to Yoco. Please ensure the payment gateway is configured.\n\nError: " + err.message);
-    btn.textContent = origText;
-    btn.disabled = false;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('yoco-create-checkout', { 
+        body: { 
+          userId: user.id,
+          origin: window.location.origin 
+        } 
+      });
+
+      if (error) throw error;
+
+      if (data && data.redirectUrl) {
+        window.location.href = data.redirectUrl; 
+      } else {
+        throw new Error("No redirect URL received from server.");
+      }
+    } catch (error) {
+      console.error("Yoco Redirect Error:", error);
+      alert("Could not connect to Yoco. Please ensure the payment gateway is configured.\n\nError: " + error.message);
+      btn.textContent = origText;
+      btn.disabled = false;
+    }
+  };
+
+  // 1. If we already have the user in memory, go ahead
+  if (currentUser) {
+    return proceedWithPayment(currentUser);
   }
+
+  // 2. Otherwise, wait for the session to be restored
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+      subscription.unsubscribe(); // Clean up the listener
+      
+      if (session?.user) {
+        currentUser = session.user; // Update your global variable
+        proceedWithPayment(session.user);
+      } else {
+        alert("Please log in to make a payment.");
+        btn.textContent = origText;
+        btn.disabled = false;
+      }
+    }
+  });
+
+  // Fallback: If the event never fires (e.g., user is logged out and no event triggers), 
+  // check the session directly after a short delay.
+  setTimeout(async () => {
+    if (!currentUser) { // If still no user, the listener might not have fired
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+            currentUser = session.user;
+            // The listener might have fired already, but proceed just in case
+            // (proceedWithPayment is idempotent-ish, but we should avoid double clicks)
+        } else {
+            // Handle logged out state
+        }
+    }
+  }, 1000); 
 }
 async function logout() {
   // 1. Clear local UI IMMEDIATELY (Hides the app)
