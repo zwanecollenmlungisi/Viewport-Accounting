@@ -1451,7 +1451,7 @@ async function showApp() {
   // 1. CHECK IF RETURNING FROM YOCO PAYMENT (The Waiting Room)
   // =======================================================
   const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('payment') === 'success') {
+ // if (urlParams.get('payment') === 'success') {
   $('#boot').style.display = 'none';
   $('#site').style.display = 'none';
   $('#app').style.display = 'none';
@@ -1485,36 +1485,22 @@ fetch('https://maqcalckhcancgbwqzhh.supabase.co/functions/v1/verify-payment', {
     } else {
         throw new Error(result.message || "Payment verification failed.");
     }
-})
-.catch(error => {
-    // Error handling
-    console.error("Verification Error:", error);
-    $('#payment-screen').innerHTML = `
-      <div style="text-align:center; padding: 40px;">
-        <h2 style="color: #dc2626; margin-bottom:10px;">Payment Verification Failed</h2>
-        <p style="color:#64748b; margin-bottom: 20px;">We couldn't verify your payment. If you were charged, please contact support.</p>
-        <button onclick="window.location.href='/'" style="padding: 10px 20px; background: #007a4d; color: white; border: none; border-radius: 5px; cursor: pointer;">Return to Home</button>
-      </div>
-    `;
-async function showApp() {
-  // ==========================================
-  // 1. CHECK IF RETURNING FROM YOCO PAYMENT
-  // ==========================================
-  const urlParams = new URLSearchParams(window.location.search);
-  
-  if (urlParams.get('payment') === 'success') {
-    $('#boot').style.display = 'none';
-    $('#site').style.display = 'none';
-    $('#app').style.display = 'none';
-    $('#payment-screen').style.display = 'flex';
-    $('#payment-screen').innerHTML = `
-      <div style="text-align:center; padding: 40px;">
-        <div class="spinner" style="width:40px; height:40px; border:4px solid #e2e8f0; border-top-color:#007a4d; border-radius:50%; margin:0 auto 20px; animation: spin 1s linear infinite;"></div>
-        <h2 style="color: #0f172a; margin-bottom:10px;">Confirming Payment...</h2>
-        <p style="color:#64748b;">Please wait while we verify your transaction with Yoco.</p>
-      </div>
-    `;
+// })
+  .catch(error => {
+      // Error handling
+      console.error("Verification Error:", error);
+      $('#payment-screen').innerHTML = `
+        <div style="text-align:center; padding: 40px;">
+          <h2 style="color: #dc2626; margin-bottom:10px;">Payment Verification Failed</h2>
+          <p style="color:#64748b; margin-bottom: 20px;">We couldn't verify your payment. If you were charged, please contact support.</p>
+          <button onclick="window.location.href='/'" style="padding: 10px 20px; background: #007a4d; color: white; border: none; border-radius: 5px; cursor: pointer;">Return to Home</button>
+        </div>
+      `;
+  }); // <--- THIS CLOSES THE CATCH BLOCK
 
+  return; // <--- THIS STOPS THE FUNCTION SO THE OLD POLLING CODE IS IGNORED
+} // <--- THIS CLOSES THE 'if (payment === success)' BLOCK
+  
     let attempts = 0;
     const pollPayment = setInterval(async () => {
       attempts++;
