@@ -2097,7 +2097,8 @@ function monthsAgo(n) {
   return new Date(now.getFullYear(), now.getMonth() - n, 15);
 }
 
-function seedState() {
+/*
+  function seedState() {
   const st = emptyState();
   st.company = {
     name: 'Acme Studio (Pty) Ltd', regNo: '2019/482011/07', address: '12 Market Street, Braamfontein, Johannesburg, 2001',
@@ -4282,7 +4283,7 @@ window.sendPasswordReset = async function() {
   if (error) return alert('Error sending reset email: ' + error.message);
   alert('Password reset link sent to ' + currentUser.email);
 }; 
-}
+/*
 </script>
 </body>
 </html>
