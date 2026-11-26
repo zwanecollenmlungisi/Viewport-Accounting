@@ -1500,49 +1500,56 @@ fetch('https://maqcalckhcancgbwqzhh.supabase.co/functions/v1/verify-payment', {
         <button onclick="window.location.href='/'" style="padding: 10px 20px; background: #007a4d; color: white; border: none; border-radius: 5px; cursor: pointer;">Return to Home</button>
       </div>
     `;
+async function showApp() {
+  // ==========================================
+  // 1. CHECK IF RETURNING FROM YOCO PAYMENT
+  // ==========================================
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  if (urlParams.get('payment') === 'success') {
+    $('#boot').style.display = 'none';
+    $('#site').style.display = 'none';
+    $('#app').style.display = 'none';
+    $('#payment-screen').style.display = 'flex';
+    $('#payment-screen').innerHTML = `
+      <div style="text-align:center; padding: 40px;">
+        <div class="spinner" style="width:40px; height:40px; border:4px solid #e2e8f0; border-top-color:#007a4d; border-radius:50%; margin:0 auto 20px; animation: spin 1s linear infinite;"></div>
+        <h2 style="color: #0f172a; margin-bottom:10px;">Confirming Payment...</h2>
+        <p style="color:#64748b;">Please wait while we verify your transaction with Yoco.</p>
+      </div>
+    `;
 
-      let attempts = 0;
-      const pollPayment = setInterval(async () => {
-        
-        // 1. Guard Clause: Wait for Supabase to load the user session
-        if (!currentUser) {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user) {
-            currentUser = session.user;
-          } else {
-            return; // Skip this tick if still no user
-          }
+    let attempts = 0;
+    const pollPayment = setInterval(async () => {
+      attempts++;
+      
+      try {
+        // Check your database to see if the payment was recorded
+        // NOTE: Make sure 'workspace_members' and 'user_id' match your actual database tables!
+        const { data, error } = await supabase
+          .from('workspace_members')
+          .select('*')
+          .eq('user_id', currentUser.id);
+
+        if (data && data.length > 0) {
+          // Success! Stop checking, clean URL, and load app
+          clearInterval(pollPayment);
+          window.history.replaceState({}, document.title, window.location.pathname);
+          $('#payment-screen').style.display = 'none';
+          $('#app').style.display = 'block';
+        } else if (attempts > 15) {
+          // Timeout after 15 tries (30 seconds)
+          clearInterval(pollPayment);
+          alert("Payment confirmation timed out. Please refresh the page.");
         }
+      } catch (err) {
+        console.error("Error polling payment status:", err);
+      }
+    }, 2000);
 
-        try {
-          // 2. Now it is safe to access currentUser.id
-          const profile = await fetchProfile(currentUser.id);
-
-          // 3. Success! The payment went through.
-          if (profile && profile.payment_status === 'paid') {
-            clearInterval(pollPayment);
-            currentUser.profile = profile;
-            window.history.replaceState({}, document.title, window.location.pathname); // Clean URL
-            alert('Payment successful! Welcome to Viewport Accounting.');
-            showApp(); // Re-run showApp now that they are paid
-            return; // <--- THIS STOPS THE LOOP IMMEDIATELY
-          }
-
-          // 4. If we get here, the payment isn't confirmed yet. Count the attempt.
-          attempts++;
-          
-          // 5. Timeout logic: Stop checking after 10 tries (20 seconds)
-          if (attempts > 10) { 
-            clearInterval(pollPayment);
-            alert('Payment confirmation timed out. Please refresh the page.');
-          }
-
-        } catch (err) {
-          console.error("Error polling payment status:", err);
-        }
-        
-      }, 2000); 
+    return; // Stop running the rest of showApp while polling
   }
+
   // =======================================================
   // 2. NORMAL LOGIN FLOW (Checking roles and paywall)
   // =======================================================
