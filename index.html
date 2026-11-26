@@ -1464,15 +1464,52 @@ async function showApp() {
     </div>
   `;
   
- // TEMPORARY FIX: Wait 3 seconds and then let the user in
-  setTimeout(() => {
-      window.history.replaceState({}, document.title, window.location.pathname); 
+// ==========================================
+  // 1. VERIFY YOCO PAYMENT
+  // ==========================================
+  try {
+    // 1. Get the checkout ID from the URL (Yoco usually appends this)
+    const checkoutId = urlParams.get('checkoutId') || urlParams.get('id');
+    
+    // 2. Call your Supabase Edge Function to securely verify the payment
+    const response = await fetch('https://maqcalckhcancgbwqzhh.supabase.co/functions/v1/verify-payment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // Make sure the user is authenticated when calling the function
+        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}` 
+      },
+      body: JSON.stringify({ checkoutId: checkoutId })
+    });
+
+    const result = await response.json();
+
+    // 3. Handle the result
+    if (response.ok && result.status === 'successful') {
+      // Success! Payment is verified. Clean the URL and let them in.
+      window.history.replaceState({}, document.title, window.location.pathname);
       $('#payment-screen').style.display = 'none';
       $('#app').style.display = 'block'; 
-      bootApp(); // Loads the dashboard data
-  }, 3000);
+      bootApp(); // Load the dashboard data
+      return; // Stop executing further code in this function
+    } else {
+      // The backend rejected the payment
+      throw new Error(result.message || "Payment verification failed.");
+    }
 
-} // <--- This closes the 'if (payment === success)' block
+  } catch (error) {
+    // 4. If the fetch fails, or the backend rejects it, show a professional error screen
+    console.error("Verification Error:", error);
+    
+    $('#payment-screen').innerHTML = `
+      <div style="text-align:center; padding: 40px; font-family: sans-serif;">
+        <h2 style="color: #dc2626; margin-bottom:10px;">Payment Verification Failed</h2>
+        <p style="color:#64748b; margin-bottom: 20px;">We couldn't verify your payment. If you were charged, please contact support.</p>
+        <button onclick="window.location.href='/'" style="padding: 10px 20px; background: #007a4d; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Return to Home</button>
+      </div>
+    `;
+  }
+} // <--- THIS CLOSES THE 'if (payment === success)' BLOCK
 
   // =======================================================
   // 2. NORMAL LOGIN FLOW (Checking roles and paywall)
@@ -4206,7 +4243,6 @@ window.sendPasswordReset = async function() {
   if (error) return alert('Error sending reset email: ' + error.message);
   alert('Password reset link sent to ' + currentUser.email);
 }; 
-}
 </script>
 </body>
 </html>
