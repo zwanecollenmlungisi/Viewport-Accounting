@@ -1464,30 +1464,48 @@ async function showApp() {
       </div>
     `;
 
-    let attempts = 0;
-    const pollPayment = setInterval(async () => {
-      const profile = await fetchProfile(currentUser.id);
-      
-      if (profile && profile.payment_status === 'paid') {
-        clearInterval(pollPayment);
-        currentUser.profile = profile;
-        window.history.replaceState({}, document.title, window.location.pathname); // Clean URL
-        alert('Payment successful! Welcome to Viewport Accounting.');
-        showApp(); // Re-run showApp now that they are paid
-        return;
-      }
-      
-      attempts++;
-      if (attempts > 10) { // Timeout after 20 seconds
-        clearInterval(pollPayment);
-        alert('Payment is still processing. Please refresh the page in a few minutes.');
-        logout();
-      }
-    }, 2000); 
+      let attempts = 0;
+      const pollPayment = setInterval(async () => {
+        
+        // 1. Guard Clause: Wait for Supabase to load the user session
+        if (!currentUser) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            currentUser = session.user;
+          } else {
+            return; // Skip this tick if still no user
+          }
+        }
 
-    return; // STOP HERE while polling. Do not load the dashboard yet.
-  }
+        try {
+          // 2. Now it is safe to access currentUser.id
+          const profile = await fetchProfile(currentUser.id);
 
+          // 3. Success! The payment went through.
+          if (profile && profile.payment_status === 'paid') {
+            clearInterval(pollPayment);
+            currentUser.profile = profile;
+            window.history.replaceState({}, document.title, window.location.pathname); // Clean URL
+            alert('Payment successful! Welcome to Viewport Accounting.');
+            showApp(); // Re-run showApp now that they are paid
+            return; // <--- THIS STOPS THE LOOP IMMEDIATELY
+          }
+
+          // 4. If we get here, the payment isn't confirmed yet. Count the attempt.
+          attempts++;
+          
+          // 5. Timeout logic: Stop checking after 10 tries (20 seconds)
+          if (attempts > 10) { 
+            clearInterval(pollPayment);
+            alert('Payment confirmation timed out. Please refresh the page.');
+          }
+
+        } catch (err) {
+          console.error("Error polling payment status:", err);
+        }
+        
+      }, 2000); 
+    
   // =======================================================
   // 2. NORMAL LOGIN FLOW (Checking roles and paywall)
   // =======================================================
