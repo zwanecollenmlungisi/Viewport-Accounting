@@ -1791,10 +1791,7 @@ async function redirectToYoco(event) {
     btn.disabled = false;
   }
 }
-  });
 
-  // Fallback: If the event never fires (e.g., user is logged out and no event triggers), 
-  // check the session directly after a short delay.
   setTimeout(async () => {
     if (!currentUser) { // If still no user, the listener might not have fired
         const { data: { session } } = await supabase.auth.getSession();
