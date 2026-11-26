@@ -1811,24 +1811,38 @@ async function doLogin(e) {
   }
   
 async function logout() {
-  // 1. Clear local UI IMMEDIATELY (Hides the app)
-  if (realtimeChannel) supabase.removeChannel(realtimeChannel);
-  currentUser = null; state = null; booted = false; activeWorkspaceId = null;
-  clearTimeout(saveTimer); clearTimeout(profileSaveTimer);
-  
-  ['#formIncome', '#formExpense', '#formAsset'].forEach(sel => { 
-    const f = $(sel); if (f) f.reset(); 
-  });
-  $$('.fld').forEach(f => f.classList.remove('bad'));
-  clearAlert();
-  showLanding();
-
-  // 2. Tell Supabase to clear ONLY the local session in the background
   try {
-    await supabase.auth.signOut({ scope: 'local' });
-  } catch (err) {
+    // 1. Clear local UI IMMEDIATELY (Hides the app)
+    if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+    currentUser = null; 
+    state = null; 
+    booted = false; 
+    activeWorkspaceId = null;
+    clearTimeout(saveTimer); 
+    clearTimeout(profileSaveTimer);
+
+    ['#formIncome', '#formExpense', '#formAsset'].forEach(sel => {
+      const f = document.querySelector(sel); 
+      if (f) f.reset();
+    });
     
+    document.querySelectorAll('.fld').forEach(f => f.classList.remove('bad'));
+    
+    // Assuming you have these functions defined elsewhere
+    if (typeof clearAlert === 'function') clearAlert();
+    if (typeof showLanding === 'function') showLanding();
+
+    // 2. Tell Supabase to clear the session
+    await supabase.auth.signOut();
+
+    // 3. FORCE A HARD RELOAD (This guarantees everything is wiped)
+    window.location.reload();
+
+  } catch (error) {
+    console.error("Logout failed:", error.message);
+    alert("Failed to log out. Please refresh the page manually.");
   }
+}
 
   // --- This block ensures the user is logged out locally regardless of server response ---
   if (realtimeChannel) supabase.removeChannel(realtimeChannel);
