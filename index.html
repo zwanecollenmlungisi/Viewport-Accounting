@@ -1463,10 +1463,6 @@ async function showApp() {
       <p style="color:#64748b;">Please wait while we verify your transaction with Yoco.</p>
     </div>
   `;
-(async () => {
-  try {
-    // 1. Get the checkout ID from the URL (Yoco usually adds this)
-const checkoutId = urlParams.get('checkoutId') || urlParams.get('id');
 
 // We use .then() instead of await to avoid ALL async errors
 fetch('https://maqcalckhcancgbwqzhh.supabase.co/functions/v1/verify-payment', {
@@ -2996,7 +2992,6 @@ function renderPartners() {
     $('#tblPartners').innerHTML = `<thead><tr>${PARTNER_FIELDS.map(f => `<th>${f.label}</th>`).join('')}<th></th></tr></thead><tbody><tr><td colspan="${PARTNER_FIELDS.length + 1}" class="empty">No partners.</td></tr></tbody>`;
     $('#partnerNote').textContent = 'Partners and agreements live here. Ownership should total 100%.'; return;
   }
-  /*
   const header = PARTNER_FIELDS.map(f => `<th${f.num ? ' class="r"' : ''}>${f.label}</th>`).join('') + '<th></th>';
   const body = list.map(p => {
     const cells = PARTNER_FIELDS.map(f => {
@@ -4283,7 +4278,6 @@ window.sendPasswordReset = async function() {
   if (error) return alert('Error sending reset email: ' + error.message);
   alert('Password reset link sent to ' + currentUser.email);
 }; 
-/*
 </script>
 </body>
 </html>
