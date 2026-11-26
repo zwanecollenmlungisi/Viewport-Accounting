@@ -1841,7 +1841,7 @@ async function logout() {
   } catch (error) {
     console.error("Logout failed:", error.message);
     alert("Failed to log out. Please refresh the page manually.");
-  }
+                                                                                   
 
   // --- This block ensures the user is logged out locally regardless of server response ---
   if (realtimeChannel) supabase.removeChannel(realtimeChannel);
