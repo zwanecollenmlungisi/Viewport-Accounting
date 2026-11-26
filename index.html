@@ -1740,54 +1740,57 @@ async function redirectToYoco(event) {
   btn.textContent = 'Connecting to Yoco...';
   btn.disabled = true;
 
-  // Helper to handle the actual payment logic
-  const proceedWithPayment = async (user) => {
-    if (!user) {
-      throw new Error("No user is currently logged in.");
-    }
+  // Helper to safely get the user ID
+  const getUserId = async () => {
+    // 1. Try to get the session directly
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user?.id) return session.user.id;
 
-    try {
-      const { data, error } = await supabase.functions.invoke('yoco-create-checkout', { 
-        body: { 
-          userId: user.id,
-          origin: window.location.origin 
-        } 
+    // 2. If no session, wait for the auth state to settle
+    return new Promise((resolve) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+          subscription.unsubscribe();
+          resolve(session?.user?.id || null);
+        }
       });
-
-      if (error) throw error;
-
-      if (data && data.redirectUrl) {
-        window.location.href = data.redirectUrl; 
-      } else {
-        throw new Error("No redirect URL received from server.");
-      }
-    } catch (error) {
-      console.error("Yoco Redirect Error:", error);
-      alert("Could not connect to Yoco. Please ensure the payment gateway is configured.\n\nError: " + error.message);
-      btn.textContent = origText;
-      btn.disabled = false;
-    }
+      // Timeout after 5 seconds to prevent infinite hanging
+      setTimeout(() => {
+        subscription.unsubscribe();
+        resolve(null);
+      }, 5000);
+    });
   };
 
-  // 1. If we already have the user in memory, go ahead
-  if (currentUser) {
-    return proceedWithPayment(currentUser);
-  }
+  try {
+    const userId = await getUserId();
 
-  // 2. Otherwise, wait for the session to be restored
-  const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-      subscription.unsubscribe(); // Clean up the listener
-      
-      if (session?.user) {
-        currentUser = session.user; // Update your global variable
-        proceedWithPayment(session.user);
-      } else {
-        alert("Please log in to make a payment.");
-        btn.textContent = origText;
-        btn.disabled = false;
-      }
+    if (!userId) {
+      throw new Error("No active session found. Please log in again.");
     }
+
+    const { data, error } = await supabase.functions.invoke('yoco-create-checkout', { 
+      body: { 
+        userId: userId,
+        origin: window.location.origin 
+      } 
+    });
+
+    if (error) throw error;
+
+    if (data && data.redirectUrl) {
+      window.location.href = data.redirectUrl; 
+    } else {
+      throw new Error("No redirect URL received from server.");
+    }
+
+  } catch (error) {
+    console.error("Payment Error:", error);
+    alert("Could not connect to Yoco.\n\nError: " + error.message);
+    btn.textContent = origText;
+    btn.disabled = false;
+  }
+}
   });
 
   // Fallback: If the event never fires (e.g., user is logged out and no event triggers), 
