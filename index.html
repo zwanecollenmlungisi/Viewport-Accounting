@@ -1792,19 +1792,6 @@ async function redirectToYoco(event) {
   }
 }
 
-  setTimeout(async () => {
-    if (!currentUser) { // If still no user, the listener might not have fired
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-            currentUser = session.user;
-            // The listener might have fired already, but proceed just in case
-            // (proceedWithPayment is idempotent-ish, but we should avoid double clicks)
-        } else {
-            // Handle logged out state
-        }
-    }
-  }, 1000); 
-}
 async function logout() {
   // 1. Clear local UI IMMEDIATELY (Hides the app)
   if (realtimeChannel) supabase.removeChannel(realtimeChannel);
