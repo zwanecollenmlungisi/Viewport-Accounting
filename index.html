@@ -1451,7 +1451,7 @@ async function showApp() {
   // 1. CHECK IF RETURNING FROM YOCO PAYMENT (The Waiting Room)
   // =======================================================
   const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('payment') === 'success') {
+  if (urlParams.get('payment') === 'success') {
   $('#boot').style.display = 'none';
   $('#site').style.display = 'none';
   $('#app').style.display = 'none';
