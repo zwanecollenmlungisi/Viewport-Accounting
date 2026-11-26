@@ -1734,64 +1734,64 @@ async function doLogin(e) {
   }
 }
 
-async function redirectToYoco(event) {
-  const btn = event.target;
-  const origText = btn.textContent;
-  btn.textContent = 'Connecting to Yoco...';
-  btn.disabled = true;
+  async function redirectToYoco(event) {
+    const btn = event.target;
+    const origText = btn.textContent;
+    btn.textContent = 'Connecting to Yoco...';
+    btn.disabled = true;
 
-  // Helper to safely get the user ID
-  const getUserId = async () => {
-    // 1. Try to get the session directly
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user?.id) return session.user.id;
+    const getUserId = async () => {
+      // 1. Try to get the session directly from storage
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) return session.user.id;
 
-    // 2. If no session, wait for the auth state to settle
-    return new Promise((resolve) => {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+      // 2. If not found immediately, wait for Supabase to restore it
+      return new Promise((resolve) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+          if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+            subscription.unsubscribe();
+            resolve(session?.user?.id || null);
+          }
+        });
+        // Timeout after 5 seconds to prevent hanging
+        setTimeout(() => {
           subscription.unsubscribe();
-          resolve(session?.user?.id || null);
-        }
+          resolve(null);
+        }, 5000);
       });
-      // Timeout after 5 seconds to prevent infinite hanging
-      setTimeout(() => {
-        subscription.unsubscribe();
-        resolve(null);
-      }, 5000);
-    });
-  };
+    };
 
-  try {
-    const userId = await getUserId();
+    try {
+      // This line waits for the session to be ready before proceeding
+      const userId = await getUserId();
 
-    if (!userId) {
-      throw new Error("No active session found. Please log in again.");
+      if (!userId) {
+        throw new Error("No active session found. Please log in again.");
+      }
+
+      const { data, error } = await supabase.functions.invoke('yoco-create-checkout', { 
+        body: { 
+          userId: userId,
+          origin: window.location.origin 
+        } 
+      });
+
+      if (error) throw error;
+
+      if (data && data.redirectUrl) {
+        window.location.href = data.redirectUrl; 
+      } else {
+        throw new Error("No redirect URL received from server.");
+      }
+
+    } catch (error) {
+      console.error("Payment Error:", error);
+      alert("Could not connect to Yoco.\n\nError: " + error.message);
+      btn.textContent = origText;
+      btn.disabled = false;
     }
-
-    const { data, error } = await supabase.functions.invoke('yoco-create-checkout', { 
-      body: { 
-        userId: userId,
-        origin: window.location.origin 
-      } 
-    });
-
-    if (error) throw error;
-
-    if (data && data.redirectUrl) {
-      window.location.href = data.redirectUrl; 
-    } else {
-      throw new Error("No redirect URL received from server.");
-    }
-
-  } catch (error) {
-    console.error("Payment Error:", error);
-    alert("Could not connect to Yoco.\n\nError: " + error.message);
-    btn.textContent = origText;
-    btn.disabled = false;
   }
-}
-
+  
 async function logout() {
   // 1. Clear local UI IMMEDIATELY (Hides the app)
   if (realtimeChannel) supabase.removeChannel(realtimeChannel);
