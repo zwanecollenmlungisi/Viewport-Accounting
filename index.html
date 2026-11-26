@@ -1842,21 +1842,7 @@ async function logout() {
     console.error("Logout failed:", error.message);
     alert("Failed to log out. Please refresh the page manually.");
                                                                                    
-
-  // --- This block ensures the user is logged out locally regardless of server response ---
-  if (realtimeChannel) supabase.removeChannel(realtimeChannel);
-  currentUser = null; state = null; booted = false; activeWorkspaceId = null;
-  clearTimeout(saveTimer); clearTimeout(profileSaveTimer);
-  
-  // Reset all forms and UI elements
-  ['#formIncome', '#formExpense', '#formAsset'].forEach(sel => { 
-    const f = $(sel); if (f) f.reset(); 
-  });
-  $$('.fld').forEach(f => f.classList.remove('bad'));
-  clearAlert();
-  
-  // Show the landing page
-  showLanding();
+  }
 }
 supabase.auth.onAuthStateChange((event, session) => {
   setTimeout(async () => {
@@ -4252,7 +4238,6 @@ window.sendPasswordReset = async function() {
   if (error) return alert('Error sending reset email: ' + error.message);
   alert('Password reset link sent to ' + currentUser.email);
 };
-}
 </script>
 </body>
 </html>
