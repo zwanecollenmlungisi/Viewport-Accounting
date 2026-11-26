@@ -1451,7 +1451,7 @@ async function showApp() {
   // 1. CHECK IF RETURNING FROM YOCO PAYMENT (The Waiting Room)
   // =======================================================
   const urlParams = new URLSearchParams(window.location.search);
- // if (urlParams.get('payment') === 'success') {
+  if (urlParams.get('payment') === 'success') {
   $('#boot').style.display = 'none';
   $('#site').style.display = 'none';
   $('#app').style.display = 'none';
@@ -1463,74 +1463,16 @@ async function showApp() {
       <p style="color:#64748b;">Please wait while we verify your transaction with Yoco.</p>
     </div>
   `;
-
-// We use .then() instead of await to avoid ALL async errors
-fetch('https://maqcalckhcancgbwqzhh.supabase.co/functions/v1/verify-payment', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ checkoutId: checkoutId })
-})
-.then(response => {
-    if (!response.ok) throw new Error("Server rejected verification");
-    return response.json();
-})
-.then(result => {
-    if (result.status === 'successful') {
-        // Payment verified! 
-        window.history.replaceState({}, document.title, window.location.pathname); 
-        $('#payment-screen').style.display = 'none';
-        $('#app').style.display = 'block'; 
-    } else {
-        throw new Error(result.message || "Payment verification failed.");
-    }
-// })
-  .catch(error => {
-      // Error handling
-      console.error("Verification Error:", error);
-      $('#payment-screen').innerHTML = `
-        <div style="text-align:center; padding: 40px;">
-          <h2 style="color: #dc2626; margin-bottom:10px;">Payment Verification Failed</h2>
-          <p style="color:#64748b; margin-bottom: 20px;">We couldn't verify your payment. If you were charged, please contact support.</p>
-          <button onclick="window.location.href='/'" style="padding: 10px 20px; background: #007a4d; color: white; border: none; border-radius: 5px; cursor: pointer;">Return to Home</button>
-        </div>
-      `;
-  }); // <--- THIS CLOSES THE CATCH BLOCK
-
-  return; // <--- THIS STOPS THE FUNCTION SO THE OLD POLLING CODE IS IGNORED
-} // <--- THIS CLOSES THE 'if (payment === success)' BLOCK
   
-    let attempts = 0;
-    const pollPayment = setInterval(async () => {
-      attempts++;
-      
-      try {
-        // Check your database to see if the payment was recorded
-        // NOTE: Make sure 'workspace_members' and 'user_id' match your actual database tables!
-        const { data, error } = await supabase
-          .from('workspace_members')
-          .select('*')
-          .eq('user_id', currentUser.id);
+ // TEMPORARY FIX: Wait 3 seconds and then let the user in
+  setTimeout(() => {
+      window.history.replaceState({}, document.title, window.location.pathname); 
+      $('#payment-screen').style.display = 'none';
+      $('#app').style.display = 'block'; 
+      bootApp(); // Loads the dashboard data
+  }, 3000);
 
-        if (data && data.length > 0) {
-          // Success! Stop checking, clean URL, and load app
-          clearInterval(pollPayment);
-          window.history.replaceState({}, document.title, window.location.pathname);
-          $('#payment-screen').style.display = 'none';
-          $('#app').style.display = 'block';
-        } else if (attempts > 15) {
-          // Timeout after 15 tries (30 seconds)
-          clearInterval(pollPayment);
-          alert("Payment confirmation timed out. Please refresh the page.");
-        }
-      } catch (err) {
-        console.error("Error polling payment status:", err);
-      }
-    }, 2000);
-
-    return; // Stop running the rest of showApp while polling
-  }
+} // <--- This closes the 'if (payment === success)' block
 
   // =======================================================
   // 2. NORMAL LOGIN FLOW (Checking roles and paywall)
