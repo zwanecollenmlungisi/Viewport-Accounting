@@ -4281,10 +4281,7 @@ window.sendPasswordReset = async function() {
   const { error } = await supabase.auth.resetPasswordForEmail(currentUser.email, { redirectTo: window.location.origin });
   if (error) return alert('Error sending reset email: ' + error.message);
   alert('Password reset link sent to ' + currentUser.email);
-};
-
-}
-       
+};      
 </script>
 </body>
 </html>
